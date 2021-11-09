@@ -2,6 +2,7 @@ import React, {useState} from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
 import {MaterialIcons} from '@expo/vector-icons'
 import Account from "../screens/Account";
+
 export default function BarHeader({navigation}){
 
     const [openAccount, setOpenAccount] = useState(false);
@@ -52,7 +53,8 @@ const styles = StyleSheet.create({
         height: 80,
         flexDirection: 'row',
         justifyContent: "center",
-        backgroundColor: 'cyan',
+        // backgroundColor: 'cyan',
+        backgroundColor: '#53cbff',
         alignItems: 'center'
     },
     headerText: {
