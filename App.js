@@ -1,151 +1,44 @@
-import React, { useEffect, useState } from 'react';
-import { Button, View, Text, Settings } from 'react-native';
+import React, { useEffect, useMemo, useReducer, useState } from 'react';
+import { Button, View, Text, Settings, TextInput, Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import 'react-native-gesture-handler';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import Homepage from './screens/Homepage';
-import Notifications from './screens/Notifications';
-import Records from './screens/Records';
-import Login from './screens/Login';
-import LogOut from './screens/LogOut';
-import { set } from 'react-native-reanimated';
-import Setting from './screens/Setting';
-import firestore from './firebase/Config';
+import { log, set } from 'react-native-reanimated';
+import {auth, db} from './firebase/Config';
 import { collection, getDocs, doc, addDoc, getDoc, setDoc, updateDoc, serverTimestamp, arrayUnion, arrayRemove } from '@firebase/firestore';
-import SignUp from './screens/SignUp';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createStackNavigator } from '@react-navigation/stack';
+import { AuthContext } from './Context/AuthContext';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@firebase/auth';
+import AccountScreen from './screens/AccountScreen';
+import HomeScreen from './screens/HomeScreen';
+import NotificationScreen from './screens/NotificationScreen';
+import RecordScreen from './screens/RecordScreen';
+import SettingScreen from './screens/SettingScreen';
+import LogOutScreen from './screens/LogOutScreen';
+import LoginScreen from './screens/LogInScreen';
+import SignUpScreen from './screens/SignUpScreen';
+
+
 
 const Drawer = createDrawerNavigator();
 
 
+function SplashScreen() {
+  return (
+    <View>
+      <Text>Loading...</Text>
+    </View>
+  );
+}
+
+const Stack = createStackNavigator();
+
 export default function App() {
 
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const usersColRef = collection(db, 'users');
 
-  const logOut = () => {
-    setIsSignedIn(false);
-  }
-
-  const logIn = () => {
-    setIsSignedIn(true);
-  }
-
-  // const usersColRef = collection(firestore, 'users');
-
-  // const [users, setUsers] = useState([
-  //   {
-  //     id: 'handmade',
-  //     name: 'B',
-  //     age: 20,
-  //   }
-  // ]);
-
-  // const addSomeData = async () => {
-  //   try {
-  //     const docRef = await addDoc(usersColRef, {
-  //       name: 'C',
-  //       sex: 'male',
-  //       age: '29'
-  //     });
-
-  //     console.log('Document written with ID:', docRef.id);
-  //   } catch (e) {
-  //     console.log("Error adding document: ", e);
-  //   }
-  // }
-
-  // const getUsers = async () => {
-  //   try {
-  //     const querySnapshot = await getDocs(usersColRef);
-  //     const listUsers = querySnapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
-  //     setUsers(listUsers);
-
-  //     // querySnapshot.docs.forEach(
-  //     //   doc => console.log({...doc.data(), id: doc.id})
-  //     // )
-
-  //   } catch (e) {
-  //     console.log("Error in reading data: ", e);
-  //   }
-  // }
-
-  // const [refreshCount, setRefreshCount] = useState(0);
-
-  // const increment = () => {
-  //   setRefreshCount(refreshCount + 1);
-
-  // }
-
-  // useEffect(
-  //   () => {
-  //     getUsers();
-  //   }
-  // , [refreshCount])
-
-  const usersColRef = collection(firestore, 'users');
-  
-  const getAccount = async () => {
-    const accountRef = doc(firestore, 'users', 'account');
-    const accountSnap = await getDocs(accountRef);
-    accountSnap.docs.map(
-      account => {
-        console.log(account.id);
-      }
-    )
-  }
-
-  const addData = async () => {
-    // await setDoc(doc(firestore, "cities", "LA"), {
-    //   name: "Los Angeles",
-    //   state: "CA",
-    //   country: "USA"
-    // });
-
-    // const docRef = await addDoc(collection(firestore, 'cities'), {
-    //   name: 'Tokyo',
-    //   country: 'Japan'
-    // })
-
-    // console.log(docRef.id);
-
-//     const frankDocRef = doc(firestore, "users", "frank");
-//     await setDoc(frankDocRef, {
-//     name: "Frank",
-//     favorites: { food: "Pizza", color: "Blue", subject: "recess" },
-//     age: 12
-// });
-  const washingtonRef = doc(firestore, "cities", "DC");
-//   await updateDoc(washingtonRef, {
-//     regions: arrayUnion("greater_virginia")
-// });
-
-await updateDoc(washingtonRef, {
-  regions: arrayRemove("Vietnam")
-});
-
-
-  }
-
-  const updateData = async() => {
-    // const docRef = doc(firestore, 'cities', 'LA');
-
-    // await updateDoc(docRef, {
-    //   isBeautiful: true,
-    //   timestamp: serverTimestamp()
-    // })
-    const frankDocRef = doc(firestore, "users", "frank");
-    await updateDoc(frankDocRef, {
-      "age": 13,
-      "favorites.color": "Red"
-    });
-  }
-  
-  const getData = async () => {
-    const usersColRef = collection(firestore, 'users');
-    const querySnapshot = getDocs(usersColRef);
-    (await querySnapshot).docs.map(
-      doc => console.log(doc.data().reminders)
-    )
-  }
 
   function RunApp(){
     return (
@@ -204,7 +97,158 @@ await updateDoc(washingtonRef, {
     )
   }
 
+  const initialState = {
+    isLoading: true,
+    isSignOut: false,
+    userToken: null,
+    userId: null
+  }
+
+  const reduce = (prevState, action) => {
+    switch (action.type) {
+      case 'RESTORE_TOKEN' :
+        return {
+          ...prevState,
+          userToken: action.token,
+          isLoading: false,
+          userId: null
+        };
+
+        case 'SIGN_IN' :
+          return {
+            ...prevState,
+            userToken: action.token,
+            isSignOut: false,
+            userId: action.userId
+          };
+
+        case 'SIGN_OUT' :
+        return {
+          ...prevState,
+          userToken: null,
+          isSignOut: true,
+          userId: null
+        };
+    }
+  }
+
+  const [state, dispatch] = useReducer(reduce, initialState);
+
+  useEffect(
+    () => {
+      const bootstrapAsync = async () => {
+        let userToken;
+
+        setTimeout(
+          () => dispatch({type: 'RESTORE_TOKEN', token: userToken})
+        , 2000)
+        // dispatch({type: 'RESTORE_TOKEN', token: userToken});
+      }
+      console.log('App renders');
+
+      bootstrapAsync();
+    }
+  , [])
+
+  useEffect(
+    () => {
+
+    }
+  , [userId])
+
+  const [count, setCount] = useState(0);
+  const [userId, setUserId] = useState(null);
+  const usersRef = collection(db, 'users');
+
+  const authContext = useMemo(
+    () => ({
+        signIn: async (email, password) => {
+          // console.log(data);
+          // setUserId(() => data.username);
+          // console.log('Set user id');
+          // console.log('Current user id is: ', userId);
+          // dispatch({type: 'SIGN_IN', token: 'dummy-auth-token'})
+
+          signInWithEmailAndPassword(auth, email, password)
+          .then( userCredentials =>{
+            const userInf = userCredentials.user;
+            // console.log(userInf);
+
+            setUserId(() => userInf.uid);
+
+            if(userId == '') console.log('True');
+
+            console.log('User id at App is:', userInf.uid);
+
+            dispatch({type: 'SIGN_IN', token: 'dummy-auth-token', userId: userInf.uid});
+
+            setCount(prevCount => prevCount + 1)
+          })
+          .catch(error => {
+            Alert.alert('Error', 'Invalid email/password.')
+            console.log('Error in signing in', error.message);
+          })
+        },
+
+        signOut : () => dispatch({type: 'SIGN_OUT'}),
+
+        signUp: async (email, password, confirmedPassword) => {
+
+          if (password == confirmedPassword) {
+            createUserWithEmailAndPassword(auth, email, password)
+            .then( userCredentials => {
+              console.log(userCredentials.user);
+              
+              setDoc(doc(db, 'users', userCredentials.user.uid), {
+                email: userCredentials.user.email
+              });
+
+              console.log('A new user has signed up');
+              
+              dispatch({type: 'SIGN_IN', token: 'dummy-auth-token'})
+            })
+            .catch (error => {
+              console.log('Error in signing up a new user', error.message);
+            })
+          } else {
+            Alert.alert('Your password is different from your confirmed password')
+          }
+        },
+        userId: userId,
+
+    })
+  , [count]);
+
+  function AppRun(){
+    return (
+        <AuthContext.Provider value={authContext}>
+          <NavigationContainer>
+            {
+              state.isLoading ? (
+                <Drawer.Screen name='Splash screen' component={SplashScreen}/>
+              ) : state.userToken ? (
+                <Drawer.Navigator>
+                <Drawer.Screen name='Home' component={HomeScreen} />
+                {/* <Drawer.Screen name='Account' component={AccountScreen} /> */}
+                <Drawer.Screen name='Notifications' component={NotificationScreen}/>
+                <Drawer.Screen name='Records' component={RecordScreen} />
+                <Drawer.Screen name='Settings' component={SettingScreen} />
+                <Drawer.Screen name='Logout' component={LogOutScreen} />
+                </Drawer.Navigator>
+              ) : (
+                <Drawer.Navigator>
+                  <Drawer.Screen name='Login' component={LoginScreen} />
+                  <Drawer.Screen name='Sign up' component={SignUpScreen} />
+                </Drawer.Navigator>
+              )
+            }
+          </NavigationContainer>
+        </AuthContext.Provider>
+    )
+  }
+
   return (
-    <RunApp />
+    <AppRun />
+    // <RunApp />
   );
 }

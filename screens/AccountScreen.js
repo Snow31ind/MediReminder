@@ -1,7 +1,7 @@
 import React from 'react'
 import { StyleSheet, Text, View, Button } from 'react-native'
 
-export default function Account({setOpenAccount}) {
+export default function AccountScreen({setOpenAccount}) {
     return (
         <View>
             <Button 
