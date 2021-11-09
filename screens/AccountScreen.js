@@ -6,7 +6,7 @@ import EditAccount from './EditAccount';
 import Homepage from './Homepage';
 
 
-export default function Account({setOpenAccount}) {
+export default function AccountScreen({setOpenAccount}) {
     const [edit, setEdit] = useState(false);
     const openEditing = () => {
         // Open editing page

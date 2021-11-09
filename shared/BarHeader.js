@@ -1,8 +1,7 @@
 import React, {useState} from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
 import {MaterialIcons} from '@expo/vector-icons'
-import Account from "../screens/Account";
-
+import Account from "../screens/AccountScreen";
 export default function BarHeader({navigation}){
 
     const [openAccount, setOpenAccount] = useState(false);

@@ -1,61 +1,79 @@
-import React, {useState} from "react";
+import React, {useContext, useState} from "react";
 import { Image, StyleSheet, View, Text, TextInput, Button, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Alert } from "react-native";
 import { log } from "react-native-reanimated";
 import { NavigationEvents } from "react-navigation";
 import {MaterialIcons} from '@expo/vector-icons';
 import { Icon } from "react-native-elements";
-import firestore from "../firebase/Config";
+import { db, auth } from "../firebase/Config";
 import { addDoc, collection, getDocs } from "@firebase/firestore";
+import { createUserWithEmailAndPassword } from "@firebase/auth";
+import { AuthContext } from "../Context/AuthContext";
 
-export default function SignUp({incrementRefreshCount, usersColRef, users, setIsSignedUp}) {
+export default function SignUpScreen({navigation}) {
     const [secure, setSecure] = useState(true);
     const [newPhoneNumber, setNewPhoneNumber] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [newConfirmPassword, setNewConfirmPassword] = useState('');
 
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmedPassword, setConfirmedPassword] = useState('');
 
-    const signUpNewAccount = async () => {
-        console.log('Register phone number:', newPhoneNumber);
-        console.log('Register password:', newPassword);
+
+    // const signUpNewAccount = async () => {
+    //     console.log('Register phone number:', newPhoneNumber);
+    //     console.log('Register password:', newPassword);
         
-        if (newPhoneNumber == '') {
-            Alert.alert('Error', 'Please assign your phone number');
-            return;
-        } else if (newPassword == '' || newConfirmPassword == '') {
-            Alert.alert('Error', 'Please correct your password.');
-            return;
-        }
+    //     if (newPhoneNumber == '') {
+    //         Alert.alert('Error', 'Please assign your phone number');
+    //         return;
+    //     } else if (newPassword == '' || newConfirmPassword == '') {
+    //         Alert.alert('Error', 'Please correct your password.');
+    //         return;
+    //     }
 
-        if (newPassword != newConfirmPassword) {
-            Alert.alert('Error', 'The confirmed password is different from the entered password.')
-            return;
-        }
+    //     if (newPassword != newConfirmPassword) {
+    //         Alert.alert('Error', 'The confirmed password is different from the entered password.')
+    //         return;
+    //     }
 
-        for(let user of users) {
-            console.log(user.id);
-            console.log(user.phoneNumber);
-            console.log(user.password); 
+    //     for(let user of users) {
+    //         console.log(user.id);
+    //         console.log(user.phoneNumber);
+    //         console.log(user.password); 
 
-            if (user.phoneNumber == newPhoneNumber) {
-                Alert.alert('The phone number already exists');
-                return;
-            }
-        }
+    //         if (user.phoneNumber == newPhoneNumber) {
+    //             Alert.alert('The phone number already exists');
+    //             return;
+    //         }
+    //     }
 
-        try {
-            await addDoc(usersColRef, {
-                phoneNumber: newPhoneNumber,
-                password: newPassword
-            })   
-        } catch (error) {
-            console.log('Error in adding data: ', error);
-        }
+    //     try {
+    //         await addDoc(usersColRef, {
+    //             phoneNumber: newPhoneNumber,
+    //             password: newPassword
+    //         })   
+    //     } catch (error) {
+    //         console.log('Error in adding data: ', error);
+    //     }
 
-        Alert.alert('Success', 'Your new account has been successfully registered\n. Welcome! Now let\'s login Reminder.');
-        incrementRefreshCount();
-        setIsSignedUp(false);
-    }
-    
+    //     Alert.alert('Success', 'Your new account has been successfully registered\n. Welcome! Now let\'s login Reminder.');
+    //     incrementRefreshCount();
+    //     setIsSignedUp(false);
+    // }
+    // const handleSignUp = () => {
+    //     createUserWithEmailAndPassword(auth, email, password)
+    //     .then( userCredentials => {
+    //         const user = userCredentials.user;
+    //         console.log(user);
+
+
+    //     })
+    //     .catch (error => console.log('Error in signing up a new email'. error.message));
+    // }
+
+    const { signUp } = useContext(AuthContext);
+
     return (
         <TouchableWithoutFeedback
         onPress={() => {Keyboard.dismiss()}}
@@ -65,7 +83,7 @@ export default function SignUp({incrementRefreshCount, usersColRef, users, setIs
                 style={{marginTop: 30, marginLeft: 10}}
                 name='arrow-back'
                 size={28}
-                onPress={() => setIsSignedUp(false)}
+                onPress={() => navigation.goBack()}
             />
 
         {/* Application Icon */}
@@ -90,9 +108,8 @@ export default function SignUp({incrementRefreshCount, usersColRef, users, setIs
             }}> 
                 <TextInput
                 style={{width: '90%'}}
-                keyboardType='numeric'
-                placeholder='Phone number'
-                onChangeText={(val) => setNewPhoneNumber(val)}
+                placeholder='Email'
+                onChangeText={text=> setEmail(text)}
                 />
             </View>
             
@@ -110,7 +127,7 @@ export default function SignUp({incrementRefreshCount, usersColRef, users, setIs
                 style={{width: '90%'}}
                 secureTextEntry={secure}
                 placeholder='Password'
-                onChangeText={(val) => setNewPassword(val)}
+                onChangeText={text => setPassword(text)}
                 />
                 <MaterialIcons
 
@@ -138,7 +155,7 @@ export default function SignUp({incrementRefreshCount, usersColRef, users, setIs
                 style={{width: '90%'}}
                 secureTextEntry={secure}
                 placeholder='Confirm password'
-                onChangeText={(val) => setNewConfirmPassword(val)}
+                onChangeText={text => setConfirmedPassword(text)}
                 />
                 <MaterialIcons
 
@@ -153,7 +170,7 @@ export default function SignUp({incrementRefreshCount, usersColRef, users, setIs
             </View>
 
             <TouchableOpacity
-                onPress={signUpNewAccount}
+                onPress={() => signUp(email, password, confirmedPassword)}
             >
                 <View style={styles.logInButton}>
                     <Text style={{
