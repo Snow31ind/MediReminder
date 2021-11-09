@@ -82,7 +82,7 @@ export default function Login({setIsSignedIn}){
             <View style={styles.appIconContainer}>
                     <Image
                         
-                        source={require('../assets/logo.png')}
+                        source={require('../assets/favicon.png')}
                         style={styles.appIcon}
                     />
 

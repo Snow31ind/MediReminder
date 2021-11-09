@@ -52,8 +52,7 @@ const styles = StyleSheet.create({
         height: 80,
         flexDirection: 'row',
         justifyContent: "center",
-        // backgroundColor: 'cyan',
-        backgroundColor: '#53cbff',
+        backgroundColor: 'cyan',
         alignItems: 'center'
     },
     headerText: {
