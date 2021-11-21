@@ -1,0 +1,70 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Users\Admin\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js add react-native-svg
+
+PATH: 
+  C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files\Java\jdk-17\bin;C:\Program Files\nodejs\;C:\Python\Python310;C:\Program Files\Git\cmd;C:\Python\Python310\Scripts\;C:\Python\Python310\;C:\Users\Admin\AppData\Local\Microsoft\WindowsApps;C:\Users\Admin\AppData\Local\Programs\Microsoft VS Code\bin;C:\Program Files\Java\jdk-17\bin;C:\Users\Admin\AppData\Roaming\npm
+
+Yarn version: 
+  1.22.17
+
+Node version: 
+  14.18.1
+
+Platform: 
+  win32 x64
+
+Trace: 
+  Error: getaddrinfo ENOTFOUND registry.yarnpkg.com
+      at GetAddrInfoReqWrap.onlookup [as oncomplete] (dns.js:71:26)
+
+npm manifest: 
+  {
+    "main": "node_modules/expo/AppEntry.js",
+    "scripts": {
+      "start": "expo start",
+      "android": "expo start --android",
+      "ios": "expo start --ios",
+      "web": "expo start --web",
+      "eject": "expo eject"
+    },
+    "dependencies": {
+      "@react-native-community/datetimepicker": "^3.5.2",
+      "@react-native-community/masked-view": "^0.1.11",
+      "@react-native-picker/picker": "2.1.0",
+      "@react-native/normalize-color": "^2.0.0",
+      "@react-navigation/drawer": "^5.12.9",
+      "@react-navigation/native": "^5.9.8",
+      "@react-navigation/native-stack": "^6.2.5",
+      "@react-navigation/stack": "^5.14.9",
+      "expo": "~43.0.0",
+      "expo-status-bar": "~1.1.0",
+      "firebase": "^9.2.0",
+      "react": "^17.0.2",
+      "react-dom": "17.0.1",
+      "react-native": "^0.64.3",
+      "react-native-calendar-strip": "^2.2.5",
+      "react-native-elements": "^3.4.2",
+      "react-native-gesture-handler": "^1.10.3",
+      "react-native-modal-datetime-picker": "^13.0.0",
+      "react-native-picker-select": "^8.0.4",
+      "react-native-reanimated": "^2.2.3",
+      "react-native-safe-area-context": "^3.3.2",
+      "react-native-screens": "^3.9.0",
+      "react-native-web": "0.17.1",
+      "react-navigation": "^4.4.4",
+      "react-navigation-drawer": "^2.7.1",
+      "react-navigation-stack": "^2.10.4",
+      "toggle-switch-react-native": "^3.3.0",
+      "undefined": "@react-native/normalize-color/base"
+    },
+    "devDependencies": {
+      "@babel/core": "^7.12.9"
+    },
+    "private": true
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

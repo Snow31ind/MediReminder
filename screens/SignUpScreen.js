@@ -1,226 +1,235 @@
-import React, {useContext, useState} from "react";
-import { Image, StyleSheet, View, Text, TextInput, Button, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Alert } from "react-native";
-import { log } from "react-native-reanimated";
-import { NavigationEvents } from "react-navigation";
+import React, {useRef, useState} from "react";
+import { Image, StyleSheet, View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Alert, Modal, ActivityIndicator } from "react-native";
 import {MaterialIcons} from '@expo/vector-icons';
-import { Icon } from "react-native-elements";
-import { db, auth } from "../firebase/Config";
-import { addDoc, collection, getDocs } from "@firebase/firestore";
-import { createUserWithEmailAndPassword } from "@firebase/auth";
-import { AuthContext } from "../Context/AuthContext";
+import {MaterialCommunityIcons} from '@expo/vector-icons';
+import {Ionicons} from '@expo/vector-icons';
+
+import Logo from '../assets/MediReminderLogo.png'
+import { useAuth } from "../Context/AuthContext";
+import { Link } from "@react-navigation/native";
 
 export default function SignUpScreen({navigation}) {
-    const [secure, setSecure] = useState(true);
-    const [newPhoneNumber, setNewPhoneNumber] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [newConfirmPassword, setNewConfirmPassword] = useState('');
+    // const emailRef = useRef()
+    // const nameRef = useRef()
+    // const phoneNumberRef = useRef()
+    // const passwordRef = useRef()
+    // const confirmPasswordRef = useRef()
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmedPassword, setConfirmedPassword] = useState('');
+	const [secure, setSecure] = useState(true)
+    const [loading, setLoading] = useState(false)
 
-
-    // const signUpNewAccount = async () => {
-    //     console.log('Register phone number:', newPhoneNumber);
-    //     console.log('Register password:', newPassword);
-        
-    //     if (newPhoneNumber == '') {
-    //         Alert.alert('Error', 'Please assign your phone number');
-    //         return;
-    //     } else if (newPassword == '' || newConfirmPassword == '') {
-    //         Alert.alert('Error', 'Please correct your password.');
-    //         return;
-    //     }
-
-    //     if (newPassword != newConfirmPassword) {
-    //         Alert.alert('Error', 'The confirmed password is different from the entered password.')
-    //         return;
-    //     }
-
-    //     for(let user of users) {
-    //         console.log(user.id);
-    //         console.log(user.phoneNumber);
-    //         console.log(user.password); 
-
-    //         if (user.phoneNumber == newPhoneNumber) {
-    //             Alert.alert('The phone number already exists');
-    //             return;
-    //         }
-    //     }
-
-    //     try {
-    //         await addDoc(usersColRef, {
-    //             phoneNumber: newPhoneNumber,
-    //             password: newPassword
-    //         })   
-    //     } catch (error) {
-    //         console.log('Error in adding data: ', error);
-    //     }
-
-    //     Alert.alert('Success', 'Your new account has been successfully registered\n. Welcome! Now let\'s login Reminder.');
-    //     incrementRefreshCount();
-    //     setIsSignedUp(false);
-    // }
-    // const handleSignUp = () => {
-    //     createUserWithEmailAndPassword(auth, email, password)
-    //     .then( userCredentials => {
-    //         const user = userCredentials.user;
-    //         console.log(user);
+    const [name, setName] = useState("")
+    const [email, setEmail] = useState("")
+    const [phoneNumber, setPhoneNumber] = useState("")
+    const [password, setPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
+    
+    const { signup } = useAuth()
 
 
-    //     })
-    //     .catch (error => console.log('Error in signing up a new email'. error.message));
-    // }
+    const handleClick = async () => {
+        try {
+            setLoading(true)
 
-    const { signUp } = useContext(AuthContext);
+            await signup(
+                email,
+                password,
+                confirmPassword,
+                {
+                    name: name,
+                    email: email,
+                    phoneNumber: phoneNumber,
+                }
+            )
+        } catch (e) {
+            console.log('Sign up error:', e.message);
+        }
+
+        setLoading(false)
+    }
+
+{
+    const CustomTextInput = ({name, placeholder, setText, ...rest}) => {
+        return (
+            <View style={styles.input}>
+                <MaterialIcons name={name} size={28} />
+                <TextInput
+                    // ref={ref}
+                    style={{marginLeft: 15, width: '80%'}}
+                    placeholder={placeholder}
+                    onChange={ text => setText(text) }
+                />
+            </View>
+        )
+    }
 
     return (
-        <TouchableWithoutFeedback
-        onPress={() => {Keyboard.dismiss()}}
-    >
-    <View style={styles.container}>
-            <MaterialIcons
-                style={{marginTop: 30, marginLeft: 10}}
-                name='arrow-back'
-                size={28}
-                onPress={() => navigation.goBack()}
-            />
+	<TouchableWithoutFeedback onPress={() => {Keyboard.dismiss()}}>            
+		<View style={styles.container}>
+			<View style={styles.headerBar}>
+					<MaterialIcons name='arrow-back' size={20} onPress={() => navigation.goBack()}/>
+			</View>
 
-        {/* Application Icon */}
-        <View style={styles.appIconContainer}>
-                <Image
-                    
-                    source={require('../assets/favicon.png')}
-                    style={styles.appIcon}
-                />
+			<View>
+					<View style={styles.header}>
+							<Image source={Logo} style={styles.logo}/>
+							<Text>Let's get started</Text>
+							<Text>Create an account to MediReminder get all features</Text>
+					</View>
 
-                <Text style={styles.appName}> Medireminder </Text>
-        </View>
+					<View style={styles.inputContainer}>
+						<View style={styles.input}>
+							<MaterialCommunityIcons name='account-outline' size={28}/>
+							<TextInput
+									style={{marginLeft: 15, width: '80%'}}
+									placeholder='Full name'
+									onChangeText={ text => setName(text) }
+							/>
+						</View>
 
-        {/* Log in form */}
-        <View style={styles.logInForm}>
-            <View style={{
-                marginVertical: 10,
-                padding: 10,
-                borderStyle: 'solid',
-                borderWidth: 2,
-                borderRadius: 20
-            }}> 
-                <TextInput
-                style={{width: '90%'}}
-                placeholder='Email'
-                onChangeText={text=> setEmail(text)}
-                />
-            </View>
-            
-            <View style={{
-                    flexDirection: 'row',
-                    marginVertical: 10,
-                    padding: 10,
-                    borderStyle: 'solid',
-                    borderWidth: 2,
-                    borderRadius: 20,
-                    borderWidth: 2
-                }}>
+						<View style={styles.input}>
+							<MaterialCommunityIcons name='email-outline' size={28}/>
+							<TextInput
+									style={{marginLeft: 15, width: '80%'}}
+									placeholder='Email'
+									onChangeText={ text => setEmail(text) }
+							/>
+						</View>
+								
+						<View style={styles.input}>
+							<MaterialIcons name='phone-iphone' size={28} />
+							<TextInput
+									style={{marginLeft: 15, width: '80%'}}
+									placeholder='Phone number'
+									onChangeText={ text => setPhoneNumber(text) }
+							/>
+						</View>
+						
+						<View style={styles.input}>
+							<Ionicons name='lock-closed-outline' size={28}/>
+							<TextInput
+									style={{marginLeft: 15, width: '80%'}}
+									placeholder='Password'
+									onChangeText={ text => setPassword(text) }
+							/>
+						
+							<Ionicons
+								onPress={() => setSecure(!secure)}
+								name={secure ? 'eye-off-outline' : 'eye-outline'} 
+								size={20}
+								style={{alignSelf: 'center'}}
+							/>
+						</View>
 
-                <TextInput
-                style={{width: '90%'}}
-                secureTextEntry={secure}
-                placeholder='Password'
-                onChangeText={text => setPassword(text)}
-                />
-                <MaterialIcons
+						<View style={styles.input}>
+							<Ionicons name='lock-closed-outline' size={28}/>
+							<TextInput
+									style={{marginLeft: 15, width: '80%'}}
+									placeholder='Confirm password'
+									onChangeText={ text => setConfirmPassword(text) }
+							/>
 
-                    style={{alignSelf: 'center'}}
-                    size={20}
-                    name='remove-red-eye'
-                    onPress={() => setSecure(!secure)}
-                />
-
-
-                
-            </View>
-
-            <View style={{
-                    flexDirection: 'row',
-                    marginVertical: 10,
-                    padding: 10,
-                    borderStyle: 'solid',
-                    borderWidth: 2,
-                    borderRadius: 20,
-                    borderWidth: 2
-                }}>
-
-                <TextInput
-                style={{width: '90%'}}
-                secureTextEntry={secure}
-                placeholder='Confirm password'
-                onChangeText={text => setConfirmedPassword(text)}
-                />
-                <MaterialIcons
-
-                    style={{alignSelf: 'center'}}
-                    size={20}
-                    name='remove-red-eye'
-                    onPress={() => setSecure(!secure)}
-                />
-
-
-                
-            </View>
-
-            <TouchableOpacity
-                onPress={() => signUp(email, password, confirmedPassword)}
+							<Ionicons
+								onPress={() => setSecure(!secure)}
+								name={secure ? 'eye-off-outline' : 'eye-outline'} 
+								size={20}
+								style={{alignSelf: 'center'}}
+							/>
+						</View>
+								
+						<View>
+						<TouchableOpacity
+                        // onPress={clickLogIn}
+                        disabled={loading}
+                        onPress={handleClick}
             >
-                <View style={styles.logInButton}>
-                    <Text style={{
-                        fontSize: 20,
-                        fontWeight: 'bold'
-                    }}> SIGN UP </Text>
-                </View>
+                        <View style={styles.logInButton}>
+                        {loading ?
+                            <ActivityIndicator size="large" color='black'/>
+                            :  
+                            <Text style={{fontSize: 20, fontWeight: 'bold'}}>SIGN UP</Text>
+                        }
+                        </View>
             </TouchableOpacity>
-        </View>
+					
+							<View style={styles.footer}>
+									<Text>Already have an acount?</Text>
+									<Link to='/Login' style={{color: 'tomato', fontWeight: 'bold'}}> Login here</Link>
+							</View>
+						</View>
 
-
-    </View>
-    </TouchableWithoutFeedback>
+					</View>
+				</View>
+			</View>
+		</TouchableWithoutFeedback>
     )
+}
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#53CBFF',
+        // justifyContent: 'space-evenly'
+        // padding: 10,
     },
-    appIconContainer: {
-        // marginTop: '50%',
-        // marginBottom: '100%',
-        marginTop: '50%',
-        flexDirection: 'column',
-        // borderWidth: 3,
-        alignItems: 'center'
+    headerBar: {
+        // backgroundColor: 'tomato',
+        padding: 20,
+        justifyContent: 'center'
+    },  
+    header: {
+        // backgroundColor: 'gray',
+        justifyContent: 'center',
+        alignItems: 'center',
+        // marginVertical: 20
     },
-    appIcon: {
+    inputContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 10
+    },
+    input: {
+        flexDirection: 'row',
+        // backgroundColor: 'gray'
+        borderRadius: 90,
+        borderColor: 'black',
+        borderWidth: 2,
+        padding: 15,
+        marginVertical: 10
+    },
+    buttonContainer : {
+        backgroundColor: 'white',
+        borderRadius: 90,
+        width: '30%',
+        padding: 10,
+        alignItems: 'center',
+        justifyContent:'center',
+        alignSelf: 'center',
+    },
+    logo: {
         width: 60,
-        height: 60,
+        height: 60
     },
-    appName: {
-        fontSize: 28,
-        fontWeight: "bold",
+    footer: {
+        marginTop: 5,
+        flexDirection: 'row',
+        // backgroundColor: 'gray',
+        alignSelf: 'center'
     },
-    logInForm: {
-        // borderWidth: 2,
-        marginTop: 0,
-        padding: 40,
+    inputContainer : {
+        padding: 20,
     },
     logInButton: {
-        marginTop: 40,
+        marginTop: 20,
         borderWidth: 2,
         borderColor: 'black',
         height: 40,
+        width: 160,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 20,
-        backgroundColor: 'white'
-    }
+        backgroundColor: 'white',
+        alignSelf: 'center'
+    },
 })

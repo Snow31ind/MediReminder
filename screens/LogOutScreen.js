@@ -1,15 +1,25 @@
-import React, { useContext } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
-import { AuthContext } from '../Context/AuthContext'
+import React from 'react'
+import { StyleSheet, View } from 'react-native'
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { useAuth } from '../Context/AuthContext'
 
 export default function LogOutScreen() {
-    const { signOut } = useContext(AuthContext);
+    const { signout } = useAuth();
+
+    const handleClick = async () => {
+        try {
+            await signout()
+        } catch (error) {
+            console.log('Log out error:', error.emssage);
+        }
+    }
 
     return (
         <View>
-            {signOut()}
+            
         </View>
     )
+    // return signOut();
 }
 
 const styles = StyleSheet.create({

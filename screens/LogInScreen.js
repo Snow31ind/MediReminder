@@ -1,23 +1,32 @@
-import React, {useContext, useEffect, useState} from "react";
-import { Image, StyleSheet, View, Text, TextInput, Button, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Alert } from "react-native";
-import { log } from "react-native-reanimated";
-import { NavigationEvents } from "react-navigation";
+import React, {useEffect, useState} from "react";
+import { Image, StyleSheet, View, Text, TextInput, Button, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Alert, ActivityIndicator } from "react-native";
 import {MaterialIcons} from '@expo/vector-icons';
-import { Icon } from "react-native-elements";
-import { collection, getDocs } from "@firebase/firestore";
-import SignUpScreen from "./SignUpScreen";
-import { db, auth } from "../firebase/Config";
-import { signInWithEmailAndPassword } from "@firebase/auth";
-import { AuthContext } from "../Context/AuthContext";
+import {MaterialCommunityIcons} from '@expo/vector-icons';
+import {Ionicons} from '@expo/vector-icons';
+import Logo from '../assets/MediReminderLogo.png'
+import { useAuth } from "../Context/AuthContext";
+import { Link } from "@react-navigation/native";
 
 export default function LoginScreen({navigation}){
-    const { signIn } = useContext(AuthContext);
-
+    // const { signIn } = useContext(AuthContext);
+    const { login } = useAuth();
 
     const [secure, setSecure] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [user, setUser] = useState(null);
+
+    const [loading ,setLoading] = useState(false)
+
+    const handleClick = async () => {
+        try {
+            setLoading(true)
+            await login(email, password)
+        } catch (e) {
+            console.log('Login error:', e.message);
+        }
+
+        setLoading(false)
+    }
 
     useEffect(
         () => {
@@ -33,7 +42,7 @@ export default function LoginScreen({navigation}){
             <View style={styles.container}>
                 {/* Application Icon */}
                 <View style={styles.appIconContainer}>
-                        <Image source={require('../assets/favicon.png')}
+                        <Image source={Logo}
                             style={styles.appIcon}
                         />
                         <Text style={styles.appName}> Medireminder </Text>
@@ -41,60 +50,48 @@ export default function LoginScreen({navigation}){
 
                 {/* Log in form */}
                 <View style={styles.logInForm}>
-                    <View style={{
-                        marginVertical: 10,
-                        padding: 10,
-                        borderStyle: 'solid',
-                        borderWidth: 2,
-                        borderRadius: 20
-                    }}> 
-                        <TextInput
-                        style={{width: '90%'}}
-                        placeholder='Email'
-                        onChangeText={text => setEmail(text)}
-                        />
-                    </View>
-                    
-                    <View style={{
-                            flexDirection: 'row',
-                            marginVertical: 10,
-                            padding: 10,
-                            borderStyle: 'solid',
-                            borderWidth: 2,
-                            borderRadius: 20
-                        }}>
-                        <TextInput
-                        style={{width: '90%'}}
-                        secureTextEntry={secure}
-                        placeholder='Password'
-                        onChangeText={text => setPassword(text)}
-                        />
+                         <View style={styles.input}>
+							<MaterialCommunityIcons name='account-outline' size={28}/>
+							<TextInput
+                                style={{marginLeft: 15, width: '80%'}}
+                                placeholder='Email'
+                                onChangeText={ text => setEmail(text) }
+							/>
+						</View>
 
-                        <MaterialIcons
+                        <View style={styles.input}>
+							<Ionicons name='lock-closed-outline' size={28}/>
+							<TextInput
+                                secureTextEntry={secure}
+                                style={{marginLeft: 15, width: '80%'}}
+                                placeholder='Password'
+                                onChangeText={ text => setPassword(text) }
+							/>
 
-                            style={{alignSelf: 'center'}}
-                            size={20}
-                            name='remove-red-eye'
+                            <Ionicons
                             onPress={() => setSecure(!secure)}
-                        />
-
-
-                        
-                    </View>
+                            name={secure ? 'eye-off-outline' : 'eye-outline'} 
+                            size={20}
+                            style={{alignSelf: 'center'}}
+                            />
+						</View>
 
                     <TouchableOpacity
                         // onPress={clickLogIn}
-                        onPress={() => signIn(email, password)}
+                        disabled={loading}
+                        onPress={handleClick}
                     >
                         <View style={styles.logInButton}>
-                            <Text style={{
-                                fontSize: 20,
-                                fontWeight: 'bold'
-                            }}> LOGIN </Text>
+                            {loading ?
+                            <ActivityIndicator size="large" color='black' />
+                            :  
+                            <Text style={{fontSize: 20, fontWeight: 'bold'}}>LOGIN</Text>
+                            }
+                            
                         </View>
                     </TouchableOpacity>
 
-                    <View style={{}}>
+                    <View style={styles.footer}>
                         <Text
                             onPress={() => navigation.navigate('Sign up')}
                             style={{
@@ -104,6 +101,7 @@ export default function LoginScreen({navigation}){
                         >
                             Not have an acocunt yet? 
                         </Text>
+                        <Link to='/Sign up' style={{color: 'tomato', fontWeight: 'bold'}}> Sign up</Link>
                     </View>
 
                 </View>
@@ -126,8 +124,8 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     appIcon: {
-        width: 60,
-        height: 60,
+        width: 80,
+        height: 80,
     },
     appName: {
         fontSize: 28,
@@ -136,17 +134,36 @@ const styles = StyleSheet.create({
     logInForm: {
         // borderWidth: 2,
         marginTop: 0,
-        padding: 40
+        padding: 25,
+        // justifyContent: 'center',
+        // alignItems: 'center'
     },
     logInButton: {
-        marginTop: 40,
+        marginTop: 20,
         borderWidth: 2,
         borderColor: 'black',
         height: 40,
+        width: 160,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 20,
-        backgroundColor: 'white'
+        backgroundColor: 'white',
+        alignSelf: 'center'
+    },
+    input: {
+        flexDirection: 'row',
+        // backgroundColor: 'gray'
+        borderRadius: 90,
+        borderColor: 'black',
+        borderWidth: 2,
+        padding: 14,
+        marginVertical: 10,
+        // justifyContent: 'space-between'
+    },
+    footer : {
+        marginTop: 5,
+        flexDirection: 'row',
+        alignSelf: 'center'
     }
 })
 

@@ -13,47 +13,111 @@ export default function Calendar({currentUserId}){
     const today = new Date().toLocaleDateString();
 
     const [date, setDate] = useState(today);
-    
-    const [listMedication, setListMedication] = useState([
-      {
-        key: '1',
-        date: '28/10/2021',
-        time: '08:00',
-        medication: 'Canxi'
-      },
-      {
-        key: '2',
-        date: '27/10/2021',
-        time: '18:00',
-        medication: 'Magie'
-      },
-      {
-        key: '3',
-        date: '29/10/2021',
-        time: '12:00',
-        medication: 'Zinc'
-      },
-      {
-        key: '4',
-        date: '28/10/2021',
-        time: '20:00',
-        medication: 'Paracetamol'
-      },
-    ])
-
-    const setSelectedDate = (selectedDate, callback) => {
-      let selectedDateToLocaleDateString = (selectedDate.date() + '/' + (selectedDate.month() + 1) + '/' + selectedDate.year()); 
-      setDate(selectedDateToLocaleDateString);
-      callback(date);
-    }
-
-    const getDateToLocaleDateString = (selectedDate) => {
-      return (selectedDate.date() + '/' + (selectedDate.month() + 1) + '/' + selectedDate.year());
-    }
-
     const [newDate, setNewDate] = useState('');
     const [newMedication, setNewMedication] = useState('');
     const [newTime, setNewTime] = useState('');
+    const [medicationsList, setMedicationsList] = useState([]);
+    const [userId, setUserId] = useState('');
+    const [selectedReminders, setSelectedReminders] = useState([]);
+    const [currentReminders, setCurrentReminders] = useState([]);
+
+    const convertDate = (date) => {
+      return date.toDate().toLocaleDateString();
+    }
+    
+    const [listMedication, setListMedication] = useState([
+      {
+        "id": "MFX28OWS1LH",
+        "name": "Benicar",
+        "reminder": {
+          "id": "SBK51WRJ5PG",
+          "timestamp": "08:00",
+          "quantity": 4
+        }
+      },
+      {
+        "id": "QLH42QUI6UV",
+        "name": "Lisinopril",
+        "reminder": {
+          "id": "XUG15CGB3DY",
+          "timestamp": "08:00",
+          "quantity": 3
+        }
+      },
+      {
+        "id": "LDM45HIH5VO",
+        "name": "Fluoxetine HCl",
+        "reminder": {
+          "id": "NWZ04KIR9YH",
+          "timestamp": "08:00",
+          "quantity": 4
+        }
+      },
+      {
+        "id": "DGK09IPT9KV",
+        "name": "Benicar",
+        "reminder": {
+          "id": "YNM20DHO1AI",
+          "timestamp": "08:00",
+          "quantity": 4
+        }
+      },
+      {
+        "id": "TGW18BQB4IK",
+        "name": "Vyvanse",
+        "reminder": {
+          "id": "ZCN38JAI9XE",
+          "timestamp": "08:00",
+          "quantity": 3
+        }
+      },
+      {
+        "id": "SOA44JDE8IP",
+        "name": "Methylprednisolone",
+        "reminder": {
+          "id": "EUX13TYH7UI",
+          "timestamp": "08:00",
+          "quantity": 4
+        }
+      },
+      {
+        "id": "RQS83UCI9EC",
+        "name": "Allopurinol",
+        "reminder": {
+          "id": "CNQ43GZH5GE",
+          "timestamp": "08:00",
+          "quantity": 2
+        }
+      },
+      {
+        "id": "TJW29SKF6ZV",
+        "name": "Metformin HCl",
+        "reminder": {
+          "id": "PWD30XPI1HX",
+          "timestamp": "08:00",
+          "quantity": 2
+        }
+      },
+      {
+        "id": "MHC42KWS0FV",
+        "name": "Prednisone",
+        "reminder": {
+          "id": "QFX69RWE2ZS",
+          "timestamp": "08:00",
+          "quantity": 4
+        }
+      },
+      {
+        "id": "BIA46KHY9UY",
+        "name": "Spiriva Handihaler",
+        "reminder": {
+          "id": "QNI51FGE4BZ",
+          "timestamp": "08:00",
+          "quantity": 3
+        }
+      }
+    ])
+
 
     const addMedicationReminder = () => {
       if (newDate != '' && newMedication != '') {
@@ -87,70 +151,49 @@ export default function Calendar({currentUserId}){
 
     const [openAddMedication, setOpenAddMedication] = useState(false);
 
-    const markedDates = (date) => {
-      for(let medication of listMedication) {
-        if (medication.date == date) {
-          return true;
-        }
-      }
 
-      return false;
+    const getUserMedication = async () => {
+      const userId = currentUserId;
+
+      console.log('Current user id', userId);
+      const pathToMedications = 'users' + '/' + userId + '/' + 'medications';
+      const userRef = collection(db, pathToMedications);
+      const medications = await getDocs(userRef);
+      
+
+      medications.docs.forEach(
+        medication => {
+          const getUserReminders = async () => {
+            const pathToReminders = pathToMedications + '/' + medication.id + '/' + 'reminders';
+            const remindersRef = collection(db, pathToReminders);
+            const remindersDocs = await getDocs(remindersRef);
+            const reminders = remindersDocs.docs.map( reminder => ({...reminder.data(), id: reminder.id}));
+
+            setMedicationsList(
+              (prevList) => ([...prevList, {...medication.data(), id: medication.id, reminders: reminders}])
+            )
+          }
+
+          getUserReminders();
+        }
+      )
     }
 
-    const [medicationsList, setMedicationsList] = useState([]);
+    // useEffect(
+    //   () => {
 
-    const [userId, setUserId] = useState('');
-    const [selectedReminders, setSelectedReminders] = useState([]);
+    //     console.log('User id in calendar', currentUserId);
 
+    //     if (medicationsList.length == 0) getUserMedication();
 
-    useEffect(
-      () => {
-        const getUserMedication = async () => {
-          const userId = currentUserId;
+    //     console.log('Reminders data are fetched');
+    //     console.log('Current medication list', medicationsList);
 
-          console.log('Current user id', userId);
-          const pathToMedications = 'users' + '/' + userId + '/' + 'medications';
-          const userRef = collection(db, pathToMedications);
-          const medications = await getDocs(userRef);
-          
-
-          medications.docs.forEach(
-            medication => {
-              const getUserReminders = async () => {
-                const pathToReminders = pathToMedications + '/' + medication.id + '/' + 'reminders';
-                const remindersRef = collection(db, pathToReminders);
-                const remindersDocs = await getDocs(remindersRef);
-                const reminders = remindersDocs.docs.map( reminder => ({...reminder.data(), id: reminder.id}));
-
-                setMedicationsList(
-                  (prevList) => ([...prevList, {...medication.data(), id: medication.id, reminders: reminders}])
-                )
-              }
-
-              getUserReminders();
-            }
-          )
-        }
-
-        console.log('User id in calendar', currentUserId);
-
-        if (medicationsList.length == 0) getUserMedication();
-
-        console.log('Reminders data are fetched');
-        console.log('Current medication list', medicationsList);
-
-      }
-    , [])
-
-    const [currentReminders, setCurrentReminders] = useState([]);
-
-    const convertDate = (date) => {
-      return date.toDate().toLocaleDateString();
-    }
+    //   }
+    // , [])
 
     return (
       <View style={styles.container}>
-       
         <CalendarStrip
         scrollToOnSetSelectedDate={false}
         scrollable={true}
@@ -160,104 +203,85 @@ export default function Calendar({currentUserId}){
         calendarHeaderStyle={{color: 'black'}}
 
         onDateSelected={(selectedDate) => {
-            console.log(selectedDate.toDate().toLocaleDateString());
+            // * Display the reminders base on the selected date.
+            // console.log(selectedDate.toDate().toLocaleDateString());
 
-            const res = medicationsList.map(
-              medication => {
-                const reminders = medication.reminders.filter(
-                  reminder => {return convertDate(reminder.timestamp) == convertDate(selectedDate);}
-                )
+            // const res = medicationsList.map(
+            //   medication => {
+            //     const reminders = medication.reminders.filter(
+            //       reminder => {return convertDate(reminder.timestamp) == convertDate(selectedDate);}
+            //     )
 
-                return reminders.map(
-                  reminder => ({
-                    id: medication.id,
-                    name: medication.name,
-                    reminder
-                  })
-                )
-              }
-            )
+            //     console.log(reminders);
 
-            // console.log('A:',res.flat(1));
+            //     return reminders.map(
+            //       reminder => ({
+            //         id: medication.id,
+            //         name: medication.name,
+            //         reminder: reminder
+            //       })
+            //     )
+            //   }
+            // )
 
-            setSelectedReminders(() => res.flat(1));
+            // setSelectedReminders(() => res.flat(1));
 
-            console.log('Selected reminders are', selectedReminders);
-
-          // console.log('Type of date in calenstrip:', selectedDate);
-          // console.log('toDate() in calenstrip:', selectedDate.toDate());
-          // console.log('toDate() in calenstrip:', selectedDate.toDate().toLocaleDateString());
-          // const transformedDate = selectedDate.toDate().toLocaleDateString();
-          
-          // setDate(() => transformedDate);
-          // console.log(date);
-          
-          // //
-          // medicationsList.forEach(
-          //   medication => {
-          //     medication.reminders.forEach(
-          //       reminder => {
-          //         if (reminder.timestamp.toDate().toLocaleDateString() == date) {
-          //           setCurrentReminders(
-          //             (prevList) => ([...prevList, {id: reminder.id, name: medication.name, timestamp: reminder.timestamp.toDate().toLocaleDateString()}])
-          //           )
-          //         }
-          //       }
-          //     )
-          //   }
-          // );
-
-          // console.log('Current reminders are:',currentReminders);
-          //
-          // setDate(getDateToLocaleDateString(selectedDate));
-          // setDate(setSelectedDate(selectedDate, console.log));
-          // console.log(date);
-          // console.log('Today is:', date);
-          // console.log(getDate(selectedDate));
-          // console.log('1:', selectedDate.calendar());
+            // console.log('Selected reminders are', selectedReminders);
         }}
         
         dateNameStyle={{color: 'black'}}
         dateNumberStyle={{color: 'black'}}
 
-        highlightDateNameStyle={{color: 'darksalmon'}}
-        highlightDateNumberStyle={{color: 'darksalmon'}}
-        highlightDateContainerStyle={{color: 'yellow'}}
-
+        highlightDateNameStyle={{color: '#53CBFF'}}
+        highlightDateNumberStyle={{color: '#53CBFF'}}
+        
         calendarAnimation={{type: 'sequence', duration: 15}}
         daySelectionAnimation={
           {
           type: "border",
           borderWidth: 2,
-          borderHighlightColor: 'darksalmon'
+          borderHighlightColor: '#53CBFF',
           }
         }
         />
 
-        <View style={styles.list}>
-          <FlatList
-            showsVerticalScrollIndicator={true}
-            data={selectedReminders}
-            keyExtractor={(item) => item.reminder.id}
-
-            renderItem={({ item })  => {
-              // if (item.timestamp == date) {
-              //   return <MedicationItem key={Math.random()} medication={item.name} />
-              // }
-
-              return <MedicationItem reminder={item}/>
-            }
-            }
-          />
-        </View>
-
-        {/* Add form Button */}
-        <View style={styles.submitButton}>
-          <MaterialIcons
-            name='add-circle'
-            size={48}
-            onPress={() => setOpenAddMedication(true)}
-          />
+        <View style={styles.listContainer}>
+          <View style={styles.list}>
+            <Text style={{alignSelf: 'center', marginVertical: 5, fontSize: 18}}>Medications</Text>
+            {/* <FlatList
+              showsVerticalScrollIndicator={true}
+              data={selectedReminders}
+              keyExtractor={(item) => item.reminder.id}
+              renderItem={({ item })  => {
+                // if (item.timestamp == date) {
+                //   return <MedicationItem key={Math.random()} medication={item.name} />
+                // }
+                return <MedicationItem key={Math.random()} reminder={item}/>
+              }
+              }
+            /> */}
+              <FlatList
+              showsVerticalScrollIndicator={true}
+              data={listMedication}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item })  => {
+                // if (item.timestamp == date) {
+                //   return <MedicationItem key={Math.random()} medication={item.name} />
+                // }
+                return <MedicationItem key={item.id} reminder={item}/>
+              }
+              }
+            />
+          </View>
+          {/* Add form Button */}
+          <View style={styles.submitButton}>
+            <MaterialIcons
+              color='white'
+              name='add-circle'
+              size={48}
+              onPress={() => setOpenAddMedication(true)}
+            />
+          </View>
         </View>
 
         <Modal
@@ -285,11 +309,18 @@ export default function Calendar({currentUserId}){
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
+    backgroundColor: 'white',
   },
   list: {
     flex: 1,
-    backgroundColor: 'beige'
+    // backgroundColor: '#53cbff',
+  },
+  listContainer: {
+    flex: 1,
+    backgroundColor: '#53cbff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30
   },
   medicationItem: {
     marginTop: 20,
@@ -303,7 +334,8 @@ const styles = StyleSheet.create({
   submitButton: {
     position: 'relative',
     alignItems: 'center',
-    backgroundColor:'beige'
+    marginVertical: 10,
+    // backgroundColor: '#53cbff',
   }
 })
 

@@ -1,10 +1,11 @@
 import React, {useState} from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
 import {MaterialIcons} from '@expo/vector-icons'
-import Account from "../screens/AccountScreen";
-export default function BarHeader({navigation}){
+// import AccountScreen from "../screens/AccountScreen";
 
-    const [openAccount, setOpenAccount] = useState(false);
+export default function BarHeader({navigation, header}){
+
+    // const [openAccount, setOpenAccount] = useState(false);
     
     const openBarMenu = () => {
         navigation.openDrawer();
@@ -16,10 +17,10 @@ export default function BarHeader({navigation}){
                 style={styles.accountIcon}
                 name='account-circle'
                 size={32}
-                onPress={() => setOpenAccount(true)}
+                onPress={() => navigation.navigate('Account')}
             />
 
-            <Text style={styles.headerText}> MediReminder </Text>
+            <Text style={styles.headerText}> {header} </Text>
 
             <MaterialIcons
             style={styles.barIcon}
@@ -28,12 +29,12 @@ export default function BarHeader({navigation}){
             onPress={openBarMenu}
             />
 
-            <Modal
+            {/* <Modal
                 visible={openAccount}
                 animationType='slide'
             >
-                <Account setOpenAccount={setOpenAccount}/>
-            </Modal>
+                <AccountScreen setOpenAccount={setOpenAccount}/>
+            </Modal> */}
 
         </View>
     )
@@ -52,7 +53,7 @@ const styles = StyleSheet.create({
         height: 80,
         flexDirection: 'row',
         justifyContent: "center",
-        backgroundColor: 'cyan',
+        backgroundColor: '#53cbff',
         alignItems: 'center'
     },
     headerText: {

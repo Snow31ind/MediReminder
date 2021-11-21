@@ -1,13 +1,18 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import BarHeader from "../shared/BarHeader";
 
 export default function NotificationScreen({navigation}){
     return (
-        <View>
-            <BarHeader navigation={navigation}/>
+        <View style={{flex: 1}}>
+            <BarHeader navigation={navigation} header={'Notifications'}/>
 
-            <Text> Notifications </Text>
+
         </View>
     )
 }
+
+const styles = StyleSheet.create({
+
+})
