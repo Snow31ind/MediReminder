@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, ScrollView, Image } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, Dimensions, ScrollView, Image, ImageBackground } from "react-native";
 import { BarChart, PieChart, ProgressChart } from "react-native-chart-kit";
 import BarHeader from "../shared/BarHeader";
 import pill from '../assets/medicationPill.png'
@@ -90,6 +90,7 @@ export default function RecordScreen({navigation}){
 
         return (
             <View style={{margin: 10}}>
+              {/* <ImageBackground source={ <CustomProgressCircle/> } style={{width: 100, height: 100}} /> */}
               <CustomProgressCircle />
               <CustomProgressCircle />
               <CustomProgressCircle />

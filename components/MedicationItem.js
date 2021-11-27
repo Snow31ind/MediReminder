@@ -3,93 +3,17 @@ import { Image, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { StyleSheet, Text, View, TouchableOpacity, Modal, Button } from 'react-native'
 import pillImg from '../assets/medicationPill.png';
 
-// function ReminderModal({
-//     openModal
-
-//     setopenModal
-
-//     name, 
-//     time, 
-//     img, 
-//     quantity}){
-//     return (
-//         <Modal
-//             animationType='fade'
-//             transparent={true}
-//             visible={openModal
-
-//             >
-//                 <View style={{backgroundColor: 'rgba(52, 52, 52, 0.8)', flex: 1}}>
-//                     <View style={styles.medicationInfModal}>
-//                         <View>
-//                             <Text style={{fontSize: 30}}> {name} </Text>
-//                         </View>
-
-//                         <View style={
-//                             {
-//                                 marginTop: '80%',
-//                                 marginHorizontal: 20,
-//                                 flexDirection: 'row',
-//                                 justifyContent: 'center',
-//                             }
-//                         }>
-//                             <View style={
-//                                 {
-//                                     width: 80,
-//                                     marginRight: 60
-//                                 }
-//                             }>
-//                                 <Button
-//                                     title='Back'
-//                                     onPress={() => setopenModal
-
-//                                 />
-//                             </View>
-                            
-//                             <View style={{
-//                                 width: 80
-//                             }}>
-//                                 <Button
-//                                     title='Confirm'
-//                                     onPress={() => {
-//                                         setopenModal
-
-//                                     }}
-//                                 />
-//                             </View>
-//                         </View>
-
-//                     </View>
-//                 </View>
-//             </Modal>
-//     )
-// }
-
-export default function MedicationItem({
-    reminder}) {
-    function addZero(i) {
-        if (i < 10) {
-            i = '0' + i
-        }
-
-        return i
-    }
+export default function MedicationItem({name, reminder}) {
 
     const [openModal, setOpenModal] = useState(false);
 
-    const medicationId = reminder.id;
-    const medicationName = reminder.name;
+    const reminderId = reminder.id
+    const medicationName = reminder.name
+    const quantity = reminder.quantity
+    const time = reminder.timestamp.toLocaleString()
+    const isConfirmed = reminder.isConfirmed
+    const isMissed = reminder.isMissed
 
-    const reminderId = reminder.reminder.id;
-    // const image = reminder.reminder.image;
-    // const isMissed = reminder.reminder.isMissed;
-    // const isTaken = reminder.reminder.isTaken;
-    const quantity = reminder.reminder.quantity;
-    // const timestamp = reminder.reminder.timestamp.toDate();
-
-    // const hour = addZero(timestamp.getHours()) + ':' + addZero(timestamp.getMinutes());
-
-    const time = reminder.reminder.timestamp
     return (
         <View>
             <TouchableOpacity onPress={() => {setOpenModal
@@ -105,7 +29,7 @@ export default function MedicationItem({
                             <Text style={styles.text}>{medicationName}</Text>
 
                             <View style={styles.timeContainer}>
-                                <Text style={styles.time}>{time}</Text>
+                                <Text style={styles.time}>{time} AM</Text>
                             </View>
                         </View>
 
@@ -130,7 +54,7 @@ export default function MedicationItem({
 											<Text style={styles.text}>{medicationName}</Text>
 
 											<View style={styles.timeContainer}>
-												<Text style={styles.time}>{time}</Text>
+												<Text style={styles.time}>{time} AM</Text>
 											</View>
 										</View>
 
@@ -198,6 +122,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 5,
+        width: 80
         // backgroundColor: 'yellow'
     },
     time : {

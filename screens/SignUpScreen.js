@@ -9,18 +9,11 @@ import { useAuth } from "../Context/AuthContext";
 import { Link } from "@react-navigation/native";
 
 export default function SignUpScreen({navigation}) {
-    // const emailRef = useRef()
-    // const nameRef = useRef()
-    // const phoneNumberRef = useRef()
-    // const passwordRef = useRef()
-    // const confirmPasswordRef = useRef()
 
 	const [secure, setSecure] = useState(true)
     const [loading, setLoading] = useState(false)
 
-    const [name, setName] = useState("")
     const [email, setEmail] = useState("")
-    const [phoneNumber, setPhoneNumber] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     
@@ -30,16 +23,11 @@ export default function SignUpScreen({navigation}) {
     const handleClick = async () => {
         try {
             setLoading(true)
-
+            
             await signup(
                 email,
                 password,
-                confirmPassword,
-                {
-                    name: name,
-                    email: email,
-                    phoneNumber: phoneNumber,
-                }
+                confirmPassword
             )
         } catch (e) {
             console.log('Sign up error:', e.message);
@@ -78,17 +66,18 @@ export default function SignUpScreen({navigation}) {
 					</View>
 
 					<View style={styles.inputContainer}>
-						<View style={styles.input}>
+						{/* <View style={styles.input}>
 							<MaterialCommunityIcons name='account-outline' size={28}/>
 							<TextInput
 									style={{marginLeft: 15, width: '80%'}}
 									placeholder='Full name'
 									onChangeText={ text => setName(text) }
 							/>
-						</View>
+						</View> */}
 
 						<View style={styles.input}>
-							<MaterialCommunityIcons name='email-outline' size={28}/>
+							{/* <MaterialCommunityIcons name='email-outline' size={28}/> */}
+							<MaterialCommunityIcons name='account-outline' size={28}/>
 							<TextInput
 									style={{marginLeft: 15, width: '80%'}}
 									placeholder='Email'
@@ -96,18 +85,19 @@ export default function SignUpScreen({navigation}) {
 							/>
 						</View>
 								
-						<View style={styles.input}>
+						{/* <View style={styles.input}>
 							<MaterialIcons name='phone-iphone' size={28} />
 							<TextInput
 									style={{marginLeft: 15, width: '80%'}}
 									placeholder='Phone number'
 									onChangeText={ text => setPhoneNumber(text) }
 							/>
-						</View>
+						</View> */}
 						
 						<View style={styles.input}>
 							<Ionicons name='lock-closed-outline' size={28}/>
 							<TextInput
+                                    secureTextEntry={secure}
 									style={{marginLeft: 15, width: '80%'}}
 									placeholder='Password'
 									onChangeText={ text => setPassword(text) }
@@ -124,6 +114,7 @@ export default function SignUpScreen({navigation}) {
 						<View style={styles.input}>
 							<Ionicons name='lock-closed-outline' size={28}/>
 							<TextInput
+                                    secureTextEntry={secure}
 									style={{marginLeft: 15, width: '80%'}}
 									placeholder='Confirm password'
 									onChangeText={ text => setConfirmPassword(text) }
@@ -138,19 +129,19 @@ export default function SignUpScreen({navigation}) {
 						</View>
 								
 						<View>
-						<TouchableOpacity
-                        // onPress={clickLogIn}
-                        disabled={loading}
-                        onPress={handleClick}
-            >
-                        <View style={styles.logInButton}>
-                        {loading ?
-                            <ActivityIndicator size="large" color='black'/>
-                            :  
-                            <Text style={{fontSize: 20, fontWeight: 'bold'}}>SIGN UP</Text>
-                        }
-                        </View>
-            </TouchableOpacity>
+                            <TouchableOpacity
+                            // onPress={clickLogIn}
+                            disabled={loading}
+                            onPress={handleClick}
+                            >
+                                <View style={styles.logInButton}>
+                                {loading ?
+                                    <ActivityIndicator size="large" color='black'/>
+                                    :  
+                                    <Text style={{fontSize: 20, fontWeight: 'bold'}}>SIGN UP</Text>
+                                }
+                                </View>
+                            </TouchableOpacity>
 					
 							<View style={styles.footer}>
 									<Text>Already have an acount?</Text>

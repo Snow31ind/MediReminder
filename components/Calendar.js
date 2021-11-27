@@ -1,13 +1,13 @@
 import React, { useContext, useEffect, useState } from "react";
-import { StyleSheet, Text, TextInput, View, TouchableOpacity, Button, TouchableWithoutFeedback, Keyboard, FlatList, Modal, Alert } from "react-native";
+import { StyleSheet, Text, TextInput, View, TouchableOpacity, Button, TouchableWithoutFeedback, Keyboard, FlatList, Modal, Alert, ActivityIndicator } from "react-native";
 import CalendarStrip from 'react-native-calendar-strip';
 import {MaterialIcons} from '@expo/vector-icons'
 import AddMedication from "./AddMedication";
 import MedicationItem from "./MedicationItem";
-import { collection, doc, getDoc, getDocs } from "@firebase/firestore";
+import { collection, doc, getDoc, getDocs, onSnapshot, orderBy, query } from "@firebase/firestore";
 import { db } from "../firebase/Config";
 import { log } from "react-native-reanimated";
-import { AuthContext } from "../Context/AuthContext";
+import { AuthContext, useAuth } from "../Context/AuthContext";
 import { Divider } from "react-native-elements/dist/divider/Divider";
 export default function Calendar({currentUserId}){
     const today = new Date().toLocaleDateString();
@@ -20,6 +20,9 @@ export default function Calendar({currentUserId}){
     const [userId, setUserId] = useState('');
     const [selectedReminders, setSelectedReminders] = useState([]);
     const [currentReminders, setCurrentReminders] = useState([]);
+    const [loading, setLoading] = useState(true)
+
+    const [medicationIdList, setMedicationIdList] = useState([])
 
     const convertDate = (date) => {
       return date.toDate().toLocaleDateString();
@@ -46,7 +49,7 @@ export default function Calendar({currentUserId}){
       },
       {
         "id": "LDM45HIH5VO",
-        "name": "Fluoxetine HCl",
+        "name": "Fluoxetine HCl ",
         "reminder": {
           "id": "NWZ04KIR9YH",
           "timestamp": "08:00",
@@ -179,20 +182,117 @@ export default function Calendar({currentUserId}){
       )
     }
 
-    // useEffect(
-    //   () => {
+    const [medications, setMedications] = useState([])
+    const [reminders, setReminders] = useState([])
+    const [currentDate, setCurrentDate] = useState(new Date())
+    const { currentUser } = useAuth()
+    const [refresh, setRefresh] = useState(0)
 
-    //     console.log('User id in calendar', currentUserId);
+    useEffect(
+      () => {
+        // setReminders(prev => [])
 
-    //     if (medicationsList.length == 0) getUserMedication();
+        // Set loading state
+        setLoading(true)
 
-    //     console.log('Reminders data are fetched');
-    //     console.log('Current medication list', medicationsList);
+        // Error: Have not sorted the array of reminders by timestamp
+        // Error: Not loading reminders for the first time add a medication plan.
+        // Method: No real-time listener but re-fetch after changes
+        const get = async () => {
+          const userMedicationsRef = collection(db, 'users', currentUser.uid.toString(), 'medications')
+          const userMedications = await getDocs(userMedicationsRef)
 
-    //   }
-    // , [])
+            userMedications.docs.map(
+              medication => {
+                const getReminders = async () => {
+                  const medicationRemindersRef = collection(db, 'users', currentUser.uid.toString(), 'medications', medication.id.toString(), 'reminders')
+                  const medicationReminders = await getDocs(medicationRemindersRef)
 
+                  medicationReminders.docs.forEach(
+                    reminder => setReminders(prev => [...prev, {
+                      medicationId: medication.id,
+                      name: medication.data().name,
+                      ...reminder.data(),
+                      id: reminder.id,
+                      timestamp: reminder.data().timestamp.toDate()
+                    }])
+                  )
+                }
+                
+                getReminders()
+              }
+            )
+        }
+
+        // get().then(() => setLoading(false))
+
+        // Not working real-time as expected
+        // Method: real-time listener
+        const getMedications = () => {
+          // var res = []
+          console.log('------------------------------------------------------------------------------');
+          const userMedicationsQuery = query(collection(db, 'users', currentUser.uid.toString(), 'medications'))
+          const unsub = onSnapshot(userMedicationsQuery, medications => {
+            console.log('Listen');
+            // setReminders(prev => [])
+            medications.docs.forEach( medication => {
+              console.log('Medication id:', medication.id);
+
+              if (!medicationIdList.includes(medication.id)) {
+                console.log('Medication with id = ', medication.id, 'is included.');
+                setMedicationIdList(prev => [...prev, medication.id])
+
+                const getReminders = async () => {
+                  const medicationRemindersRef = collection(db, 'users', currentUser.uid.toString(), 'medications', medication.id.toString(), 'reminders')
+                  const medicationReminders = await getDocs(medicationRemindersRef)
+  
+                  medicationReminders.docs.forEach(
+                    reminder => {
+                      // setReminders(prev => [...prev, {medicationId: medication.id, name: medication.data().name,...reminder.data(), id: reminder.id, timestamp: reminder.data().timestamp.toDate()}])
+                      console.log(reminder.id);
+                    }
+                  )
+                  // const userRemindersQuery = query(collection(db, 'users', currentUser.uid.toString(), 'medications', medication.id.toString(), 'reminders'), orderBy('timestamp'))
+                  // var x = []
+                  
+                  // const y = onSnapshot(userRemindersQuery, reminders => {
+                  //   // reminders.docs.forEach(reminder => console.log(reminder.data().timestamp.toDate().toLocaleString()))
+                  //   // reminders.docs.forEach(reminder => x.push({...reminder.data(), id: reminder.id}))
+                  //   reminders.docs.forEach(reminder => setReminders(prev => [...prev, {medicationId: medication.id, name: medication.data().name,...reminder.data(), id: reminder.id, timestamp: reminder.data().timestamp.toDate()}]))
+                  // })
+  
+                  // console.log(y);
+  
+                  // const userReminders = await getDocs(userRemindersRef)
+                  // userReminders.docs.forEach( doc => console.log(doc.data()))
+                  // setMedications(prev =>  [...prev, {...doc.data(), id: doc.id, reminders : userReminders.docs.map( reminder => ({...reminder.data(), id: reminder.id}) )}])
+                  // res.push({...doc.data(), id: doc.id, reminders : userReminders.docs.map( reminder => ({...reminder.data(), id: reminder.id}) )})
+                  // console.log(res.length);
+                  // console.log(res);
+                }
+
+                getReminders()
+              } else console.log('Medication with id = ', medication.id, ' already exists.');
+
+            });
+          })
+        }
+
+        getMedications()
+        setLoading(false)
+        console.log(reminders.length);
+        console.log('Calender refreshes at count =', refresh);
+      }
+    , [])
+
+    if (loading)
     return (
+      <ActivityIndicator size="large" color='#53cbff'/>
+    )
+
+    if (!loading)
+    return (
+      
       <View style={styles.container}>
         <CalendarStrip
         scrollToOnSetSelectedDate={false}
@@ -201,32 +301,11 @@ export default function Calendar({currentUserId}){
         style={{height: 80}}
         calendarColor={'white'}
         calendarHeaderStyle={{color: 'black'}}
-
+        selectedDate={currentDate}
         onDateSelected={(selectedDate) => {
-            // * Display the reminders base on the selected date.
-            // console.log(selectedDate.toDate().toLocaleDateString());
-
-            // const res = medicationsList.map(
-            //   medication => {
-            //     const reminders = medication.reminders.filter(
-            //       reminder => {return convertDate(reminder.timestamp) == convertDate(selectedDate);}
-            //     )
-
-            //     console.log(reminders);
-
-            //     return reminders.map(
-            //       reminder => ({
-            //         id: medication.id,
-            //         name: medication.name,
-            //         reminder: reminder
-            //       })
-            //     )
-            //   }
-            // )
-
-            // setSelectedReminders(() => res.flat(1));
-
-            // console.log('Selected reminders are', selectedReminders);
+          console.log('Selected day:', selectedDate);
+          setCurrentDate(new Date(selectedDate))
+          // console.log('Current day:', currentDate);
         }}
         
         dateNameStyle={{color: 'black'}}
@@ -248,19 +327,24 @@ export default function Calendar({currentUserId}){
         <View style={styles.listContainer}>
           <View style={styles.list}>
             <Text style={{alignSelf: 'center', marginVertical: 5, fontSize: 18}}>Medications</Text>
-            {/* <FlatList
+            <FlatList
               showsVerticalScrollIndicator={true}
-              data={selectedReminders}
-              keyExtractor={(item) => item.reminder.id}
+              data={reminders}
+              keyExtractor={(item) => item.id}
               renderItem={({ item })  => {
-                // if (item.timestamp == date) {
-                //   return <MedicationItem key={Math.random()} medication={item.name} />
-                // }
-                return <MedicationItem key={Math.random()} reminder={item}/>
+                // const filteredReminders = reminders.filter( reminder => {
+                //   return reminder.timestamp.toLocaleDateString() == currentDate.toLocaleDateString()
+                // })
+
+                // return filteredReminders.map( reminder => <MedicationItem key={reminder.id} reminder={reminder}/>)
+
+                if (currentDate.toLocaleDateString() === item.timestamp.toLocaleDateString())
+                  return <MedicationItem key={item.id} reminder={item}/>
               }
               }
-            /> */}
-              <FlatList
+            />
+
+              {/* <FlatList
               showsVerticalScrollIndicator={true}
               data={listMedication}
               keyExtractor={(item) => item.id}
@@ -271,7 +355,8 @@ export default function Calendar({currentUserId}){
                 return <MedicationItem key={item.id} reminder={item}/>
               }
               }
-            />
+            /> */}
+
           </View>
           {/* Add form Button */}
           <View style={styles.submitButton}>
@@ -292,6 +377,7 @@ export default function Calendar({currentUserId}){
           }}
         >
           <AddMedication 
+            setRefresh={setRefresh}
             newDate = {newDate}
             newMedication={newMedication}
             setNewDate={setNewDate}
