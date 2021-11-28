@@ -23,7 +23,6 @@ export default function SignUpScreen({navigation}) {
     const handleClick = async () => {
         try {
             setLoading(true)
-            
             await signup(
                 email,
                 password,

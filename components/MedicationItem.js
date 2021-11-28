@@ -1,41 +1,71 @@
 import React, { useState } from 'react'
 import { Image, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { StyleSheet, Text, View, TouchableOpacity, Modal, Button } from 'react-native'
+import { confirmReminder, unconfirmReminder } from '../api/ReminderApi';
 import pillImg from '../assets/medicationPill.png';
+import { useAuth } from '../Context/AuthContext';
+import {MaterialIcons} from '@expo/vector-icons'
 
-export default function MedicationItem({name, reminder}) {
+export default function MedicationItem({setRefresh, reminder}) {
 
     const [openModal, setOpenModal] = useState(false);
 
     const reminderId = reminder.id
     const medicationName = reminder.name
     const quantity = reminder.quantity
-    const time = reminder.timestamp.toLocaleString()
+    const time = (
+        (reminder.timestamp.getHours() < 10 ? '0' : '')
+        + reminder.timestamp.getHours()
+        + ':'
+        + (reminder.timestamp.getMinutes() < 10 ? '0' : '')
+        + reminder.timestamp.getMinutes()
+    )
     const isConfirmed = reminder.isConfirmed
     const isMissed = reminder.isMissed
 
+    const { currentUser } = useAuth()
+
+    const handleClickBack = () => {
+        setOpenModal(false)
+    }
+
+    const handleClickConfirm = () => {
+        confirmReminder(currentUser.uid.toString(), reminder.medicationId, reminder.id)
+        setOpenModal(false)
+        setRefresh()
+    }
+
+    const handleClickUnconfirm = () => {
+        unconfirmReminder(currentUser.uid.toString(), reminder.medicationId, reminder.id)
+        setOpenModal(false)
+        setRefresh()
+    }
+
     return (
-        <View>
-            <TouchableOpacity onPress={() => {setOpenModal
-							(!openModal
-							)}}>
-                <View style={styles.container}>
-                    <Image source={pillImg}
-                        style={{maxWidth: 40, maxHeight: 40}}
-                    />
+        <View style={styles.container}>
+            <Text style={styles.time}>{time}</Text>
+            <TouchableOpacity onPress={() => {setOpenModal(!openModal)}}>
+                <View style={styles.contentContainer}>
+                    <View style={{padding: 5}}>
+                        <Image
+                            source={pillImg}
+                            style={{width: 40, height: 40}}
+                        />
+                    </View>
                     
                     <View style={styles.reminderInf}>
                         <View style={styles.textContainer}>
                             <Text style={styles.text}>{medicationName}</Text>
-
-                            <View style={styles.timeContainer}>
-                                <Text style={styles.time}>{time} AM</Text>
-                            </View>
+                            <Text>Take {quantity}</Text>
+                            {/* <View style={styles.timeContainer}>
+                                <Text style={styles.time}>{time}</Text>
+                            </View> */}
                         </View>
 
-                        <View>
-                            <Text style={styles.quantity}>x{quantity}</Text>
-                        </View>
+                        {/* <View> */}
+                        { reminder.isConfirmed ? <MaterialIcons name='check-circle' color='green' size={22}/> : <></>}
+                            {/* <Text style={styles.quantity}>x{quantity}</Text> */}
+                        {/* </View> */}
                     </View>
                 </View>
             </TouchableOpacity>
@@ -54,20 +84,26 @@ export default function MedicationItem({name, reminder}) {
 											<Text style={styles.text}>{medicationName}</Text>
 
 											<View style={styles.timeContainer}>
-												<Text style={styles.time}>{time} AM</Text>
+												<Text style={{fontSize: 20, fontWeight: 'bold'}}>{time}</Text>
 											</View>
 										</View>
 
 									</View>
 
-									<Text style={[styles.modalQuantity, styles.quantity]}>x{quantity}</Text>
+									<Text style={[styles.modalQuantity, styles.quantity]}>Take {quantity}</Text>
 
 									<View style={styles.buttonsContainer}>
-										<TouchableOpacity style={[styles.modalButton, {backgroundColor: 'tomato'}]} onPress={() => setOpenModal(false)}>
+										<TouchableOpacity
+                                            style={[styles.modalButton, {backgroundColor: 'tomato'}]}
+                                            onPress={handleClickBack}
+                                        >
 											<Text>Back</Text>
 										</TouchableOpacity>
-										<TouchableOpacity style={[styles.modalButton, {backgroundColor: '#53cbff'}]} onPress={() => setOpenModal(false)}>
-											<Text>Confirm</Text>
+										<TouchableOpacity
+                                            style={[styles.modalButton, {backgroundColor: '#53cbff'}]}
+                                            onPress={reminder.isConfirmed ? handleClickUnconfirm  : handleClickConfirm}
+                                        >
+											<Text>{reminder.isConfirmed ? 'Unconfirm' : 'Confirm'}</Text>
 										</TouchableOpacity>
 									</View>
 
@@ -82,9 +118,12 @@ export default function MedicationItem({name, reminder}) {
 
 const styles = StyleSheet.create({
     container: {
+        padding: 10
+    },
+    contentContainer: {
         flexDirection: 'row',
         backgroundColor: 'white',
-        margin: 20,
+        // margin: 20,
         padding: 15,
         borderRadius: 20,
         // borderWidth: 2,
@@ -94,10 +133,13 @@ const styles = StyleSheet.create({
         // justifyContent: 'space-between'
     },
     text: {
-        fontSize: 16,
+        fontSize: 20,
     },
     time: {
-        fontSize: 16,
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginLeft: 10,
+        marginBottom: 5
     },
     reminderInf : {
         flexDirection: 'row',
@@ -124,11 +166,6 @@ const styles = StyleSheet.create({
         marginTop: 5,
         width: 80
         // backgroundColor: 'yellow'
-    },
-    time : {
-        // flexShrink: 1,
-        // flexWrap: 'wrap'
-        // backgroundColor: '#23AAE3',
     },
     quantity : {
         fontSize: 20
@@ -166,9 +203,9 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-evenly'
 	},
 	modalButton: {
-		padding: 10,
+		padding: 15,
 		borderRadius: 10,
-		width: 80,
+		// width: 80,
 		justifyContent: 'center',
 		alignItems: 'center'
 	},

@@ -74,7 +74,7 @@ export default function SettingScreen({navigation}){
                     <OptionButton title='Language' description=''/>
                     <OptionButton title='About' />
 
-                    <OptionButton title='Log out' onPress={() => signout()}/>
+                    <OptionButton title='Sign out' onPress={() => signout()}/>
                 </View>
             </ScrollView>
         </View>

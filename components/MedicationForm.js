@@ -16,7 +16,7 @@ import { useUser } from "../Context/UserContext";
 import { useAuth } from "../Context/AuthContext";
 import { db } from "../firebase/Config";
 
-export default function AddMedication({setRefresh, setOpenAddMedication ,addMedicationReminder, newMedication, newDate, setNewMedication, setNewDate, newTime, setNewTime}){
+export default function MedicationForm({setRefresh, setOpenAddMedication ,addMedicationReminder, newMedication, newDate, setNewMedication, setNewDate, newTime, setNewTime}){
   // daily, specific, interval
   
   const [reminderType, setReminderType] = useState('daily');
@@ -31,15 +31,15 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
   const frequencyModes = [
     {
       label: 'Every Day',
-      value: 'daily'
+      value: 'Daily'
     },
     {
       label: 'Specific Days',
-      value: 'specific'
+      value: 'Specific'
     },
     {
       label: 'Days Interval',
-      value: 'interval'
+      value: 'Interval'
     },
   ]
 
@@ -70,7 +70,7 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
     }, 
   ]
 
-  const [frequency, setFrequency] = useState('daily')
+  const [frequency, setFrequency] = useState('Daily')
   const [times, setTimes] = useState(1)
 
 
@@ -143,7 +143,6 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
 
       return (h < 10 ? '0' + h.toString() : h.toString()) + ':' + (m < 10 ? '0' + m.toString() : m.toString())
 
-      // return (reminder.hour < 10 ? '0' + toString(reminder.hour) : toString(reminder.hour)) + ':' + (reminder.minute < 10 ? '0' + toString(reminder.minute) : toString(reminder.minute)) 
     }
 
     const showDatePicker = () => {
@@ -155,16 +154,6 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
     };
   
     const handleConfirm = (day) => {
-      // console.log(day.getHours());
-      // console.log(day.getMinutes());
-      // // const timestamp = day.getHours().toString() + ':' + (day.getMinutes() < 10 ?  '0' + day.getMinutes().toString() : day.getMinutes().toString())
-      // // console.log('Timestamp:', timestamp);
-      // setTime( prevTime => ({...prevTime, hour: day.getHours(), minute: day.getMinutes()}))
-      // console.log(time);
-
-      // console.log(day);
-      // console.log(day.getHours());
-      // console.log(day.getMinutes());
 
       setTime( prevTime => ({
         ...prevTime,
@@ -211,17 +200,17 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
           <View style={styles.modal}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={{color: 'tomato', fontWeight: 'bold', fontSize: 16}} onPress={() => setOpenReminderModal(!openReminderModal)}>Cancel</Text>
-                <Text>Edit Time And Doses</Text>
-                <Text style={{color: '#53cbff', fontWeight: 'bold', fontSize: 16}} onPress={handleClickDone}>Done</Text>
+                <Text style={{fontWeight: 'bold', fontSize: 16}} onPress={() => setOpenReminderModal(!openReminderModal)}>Cancel</Text>
+                <Text style={{}}>Edit Time And Doses</Text>
+                <Text style={{fontWeight: 'bold', fontSize: 16}} onPress={handleClickDone}>Done</Text>
               </View>
 
               <View style={{justifyContent: 'space-evenly', flex: 1}}>
                 <TouchableOpacity onPress={showDatePicker} style={styles.modalTime}>
-                  <Text>Time</Text>
+                  <Text style={styles.modalText}>Time</Text>
                   <View style={{flexDirection: 'row'}}>
-                    <Text>{getTime(time)}</Text>
-                    <MaterialIcons name='arrow-right' size={20} />
+                    <Text style={{fontSize: 20}}>{getTime(time)}</Text>
+                    <MaterialIcons name='arrow-right' size={28} />
                   </View>
                   <DateTimePicker
                     isVisible={isDatePickerVisible}
@@ -230,15 +219,27 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
                     onCancel={hideDatePicker}
                   />
                 </TouchableOpacity>
+
                 <View style={styles.modalDose}>
-                  <Text>Quantity</Text>
-                  <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: 120}}>
-                    <TouchableOpacity disabled={quantity > 1 ? false : true} onPress={handleClickDecrementDose}>
-                      <MaterialCommunityIcons name='minus-circle-outline' size={28}/>
+                  <Text style={styles.modalText}>Doses</Text>
+                  <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <TouchableOpacity
+                      disabled={time.quantity === 1 ? true : false} 
+                      onPress={handleClickDecrementDose}
+                    >
+                      <MaterialCommunityIcons
+                        color={time.quantity === 1 ? 'gray' : 'black'}
+                        name='minus-box-outline'
+                        size={40}
+                      />
                     </TouchableOpacity>
-                    <Text>{time.quantity}</Text>
-                    <TouchableOpacity onPress={handleClickIncrementDose}>
-                      <MaterialCommunityIcons name='plus-circle-outline' size={28}/>
+
+                    <Text style={{borderBottomWidth: 2, fontSize: 18}}>{time.quantity}</Text>
+
+                    <TouchableOpacity
+                      onPress={handleClickIncrementDose}
+                    >
+                      <MaterialCommunityIcons name='plus-box-outline' size={40}/>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -340,8 +341,8 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
 
     createMedicationPlan()
     setOpenAddMedication(false)
-
-    setRefresh(prev => prev + 1)
+    
+    setRefresh()
   }
 
   const setUpReminders = (startDate, endDate) => {
@@ -414,7 +415,7 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
               <Text>Cancel</Text>
             </TouchableOpacity>
 
-            <Text>New Medication</Text>
+            <Text>New Medicine</Text>
             <TouchableOpacity onPress={handleClickDoneAddMedication} style={{flexDirection: 'row'}}>
               <Text>Done</Text>
             </TouchableOpacity>
@@ -428,6 +429,7 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
                 <TextInput
                   style={{marginLeft: 10, padding: 5}}
                   // onChangeText={text => setMedication( prevMedication => ({...prevMedication, name: text}))}
+                  textAlign='right'
                   onChangeText={text => setName(text)}
                   placeholder='Medication name'
                 />
@@ -440,14 +442,18 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
                 style={styles.button}
                 onPress={openFrequencyRef}
               >
-                <Text>Frequency</Text>
-                <Picker style={{width: 160, backgroundColor: ''}} ref={frequencyRef} onValueChange={(itemVlaue, itemIdx) => setFrequency(itemVlaue)} selectedValue={frequency}>
+                <Text>{frequency}</Text>
+                <Picker 
+                  ref={frequencyRef}
+                  onValueChange={(itemVlaue, itemIdx) => setFrequency(itemVlaue)} 
+                  selectedValue={frequency}
+                >
                   {frequencyModes.map( (mode, idx) => <Picker.Item key={idx} label={mode.label} value={mode.value}/>)}
                 </Picker>
               </TouchableOpacity>
             </View>
 
-            { frequency === 'interval' ?
+            { frequency === 'Interval' ?
             <View style={styles.buttonBox}>
               <Text>How often?</Text>
               <View style={styles.button}>
@@ -461,11 +467,6 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
 
             <View style={styles.buttonBox}>
               <Text style={styles.boxHeaderText}>How many times a day?</Text>
-              {/* <View style={styles.button}>
-                  <TextInput onChange={text => setTimes(text)} value={times}  placeholder='times' keyboardType='numeric' />
-                  <Text>time(s) a day</Text>
-              </View> */}
-
               <TouchableOpacity
                 style={styles.button}
                 onPress={openTimesRef}
@@ -474,7 +475,7 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
                 <Picker
                   ref={timeRef}
                   onValueChange={(itemValue, itemIdx) => {
-                    console.log('Item value is:', itemValue);
+                    // console.log('Item value is:', itemValue);
                     setTimes(() => itemValue)
                   }}
                   selectedValue={times}
@@ -486,16 +487,16 @@ export default function AddMedication({setRefresh, setOpenAddMedication ,addMedi
 
             <View style={styles.buttonBox}>
               <Text style={styles.boxHeaderText}>Set up your reminders</Text>
-              <View style={{paddingHorizontal: 20}}>
+              <View style={{}}>
                 { reminders.map( (reminder, idx) => <ReminderModal key={idx} reminders={reminders} setReminders={setReminders} idx={idx} reminder={reminder} />)}
               </View>
             </View>
             
             {
-              frequency === 'specific' ?
+              frequency === 'Specific' ?
               <View style={styles.buttonBox}>
                 <Text>Which days?</Text>
-                { dateInWeek.map( day => <DayChecker day={day}/>)}
+                { dateInWeek.map( (day,idx) => <DayChecker key={idx} day={day}/>)}
               </View>
               :
               <></>
@@ -570,11 +571,12 @@ const styles = StyleSheet.create({
     flex: 1
   },
   headerBar: {
-    height: 60,
+    // height: 50,
     padding: 10,
     backgroundColor: '#53cbff',
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    alignItems: 'flex-end'
   },
   button : {
     flexDirection: 'row', 
@@ -582,7 +584,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#53cbff',
-    // borderRadius: 10,
+    borderRadius: 20,
     paddingHorizontal: 10,
     height: 60
   },
@@ -591,7 +593,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 10,
     backgroundColor: '#53cbff',
-    borderRadius: 10,
+    borderRadius: 20,
     marginVertical: 5
   },
   modal : {
@@ -603,7 +605,9 @@ const styles = StyleSheet.create({
   modalHeader: {
       // height: 80,
       flexDirection: 'row',
-      justifyContent: 'space-between'
+      justifyContent: 'space-between',
+      // borderBottomWidth: 1,
+      // padding: 5
   },
   modalContainer : {
     position: 'absolute',
@@ -612,12 +616,14 @@ const styles = StyleSheet.create({
     height: '50%',
     // justifyContent: '',
     // backgroundColor: 'gray'
-    backgroundColor: 'white'
+    backgroundColor: '#53cbff',
+    padding: 10
   },
   modalDose: {
-    flexDirection: 'row',
+    // flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10
+    marginTop: 10,
+    // flex: 1
   },
   modalTime : {
     flexDirection: 'row',
@@ -631,22 +637,23 @@ const styles = StyleSheet.create({
     // marginTop: 5,
     fontWeight: 'bold'
   },
-  contentContainer : {
+  contentContainer: {
     flex: 1,
-    // backgroundColor: '#53cbff'
-    // padding: 5,
+    // backgroundColor: '#53cbff',
+    // padding: 10,
   },
   input : {
     flexDirection: 'row',
     alignItems:'center',
     padding: 10,
     backgroundColor: '#53cbff',
-    height: 60
-    // borderRadius: 10
+    height: 60,
+    borderRadius: 20,
+    justifyContent: 'space-between'
     // color: 'white'
   },
   contentContainer : {
-    // padding: 10
+    padding: 10
   },
 
   checkBox : {
@@ -664,5 +671,11 @@ const styles = StyleSheet.create({
   dayText : {
     fontWeight: 'bold',
     color: 'tomato'
+  },
+  boxContainer: {
+    // borderRadius: 10
+  },
+  modalText: {
+    fontSize: 18
   }
 })

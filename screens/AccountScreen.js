@@ -154,10 +154,14 @@ export default function AccountScreen({setOpenAccount, navigation}) {
 
                     <TouchableOpacity 
                         style={styles.box}
+                        onPress={isEditing ?  openGenderRef : () => {}}
                     >
                         <Text>Gender</Text>
+                        {/* <Text>{gender}</Text> */}
                         <Picker
                             style={{width: 120}}
+                            accessibilityElementsHidden={true}
+                            ref={genderRef}
                             onValueChange={(value, idx) => setGender(value)}
                             selectedValue={isEditing ? gender : info.gender}
                         >
