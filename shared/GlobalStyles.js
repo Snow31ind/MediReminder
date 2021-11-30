@@ -1,10 +1,13 @@
 import { StyleSheet } from "react-native";
 
 export const GlobalStyles = StyleSheet.create({
-    defaultNagivationOptions: {
-        headerStyle : {
-            backgroundColor: '#00bfff',
-            height: 60,
-        }
+    error : {
+        color: 'red',
+        fontSize: 13,
+        // fontWeight: 'bold'
     },
+    warning: {
+        color: 'gray',
+        fontSize: 12
+    }
 })

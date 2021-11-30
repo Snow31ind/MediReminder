@@ -21,7 +21,7 @@ export default function HomeScreen({navigation}) {
         <View style={styles.calendar}>
             <BarHeader navigation={navigation} header={'Home'} />
             {/* <Text>{currentUser.uid}</Text>         */}
-            <Calendar currentUserId={currentUser.uid} />
+            <Calendar navigation={navigation} currentUserId={currentUser.uid} />
         </View>
     )
 };

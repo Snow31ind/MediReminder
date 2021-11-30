@@ -1,47 +1,226 @@
-import React, { useState } from 'react'
-import { StyleSheet, Text, View, Button, Image, TouchableOpacity, TouchableWithoutFeedback, Keyboard } from 'react-native'
+import React, { useEffect, useRef, useState } from 'react'
+import { StyleSheet, Text, View, Button, Image, TouchableOpacity, TouchableWithoutFeedback, Keyboard, ActivityIndicator } from 'react-native'
 import { TextInput } from 'react-native-gesture-handler'
 import { color } from 'react-native-reanimated'
 import BarHeader from '../shared/BarHeader'
-import avatar from '../assets/favicon.png';
+import userAvatar from '../assets/favicon.png';
 import ToggleSwitch from 'toggle-switch-react-native';
+import { doc, getDoc, onSnapshot, setDoc, Timestamp, updateDoc } from '@firebase/firestore'
+import { useAuth } from '../Context/AuthContext'
+import { db } from '../firebase/Config'
+import { useUser } from '../Context/UserContext'
+
+import {Picker} from '@react-native-picker/picker'
+import DateTimePicker from 'react-native-modal-datetime-picker'
 
 export default function AccountScreen({setOpenAccount, navigation}) {
-    const [isEditing, setIsEditing] = useState(false);
-        
+    const [isEditing, setIsEditing] = useState(false)
+    const [saveLoading, setSaveLoading] = useState(false)
+
+    const genderRef = useRef()
+
+    function openGenderRef() {
+        genderRef.current.focus()
+    }
+
+    const [isBirthdayVisible, setBirthdayVisibility] = useState(false)
+
+    const handleOpenBirthday = () => {
+        setBirthdayVisibility(true)
+    }
+
+    const handleConfirmBirthday = (day) => {
+        // console.log(day);
+        var firestoreTimestampDay = Timestamp.fromDate(day)
+        // console.log(x);
+        // setNewInfo( prevInfo => ({...prevInfo, birthDate: firestoreTimestampDay}))
+        setBirthday(day)
+        handleCancelBirthday()
+    }
+
+    const handleCancelBirthday = () => {
+        setBirthdayVisibility(false)
+    }
+
+    class Info {
+        constructor(avatar = '', name = '', gender = '', birthday =  new Date(), phoneNumber = '', bio = '') {
+            this.avatar = avatar
+            this.name = name
+            this.gender = gender
+            this.birthday = birthday
+            this.phoneNumber = phoneNumber
+            this.bio = bio
+        }
+    }
+
+    const [info, setInfo] = useState(new Info())
+
+    const { currentUser } = useAuth()
+
+    const handleClickSave =  async () => {
+
+        try {
+            setSaveLoading(true)
+
+            await updateDoc(doc(db, 'users', currentUser.uid.toString()), {
+                info: {
+                    avatar: avatar,
+                    name: name,
+                    gender: gender,
+                    birthday: Timestamp.fromDate(birthday),
+                    phoneNumber: phoneNumber,
+                    bio: bio
+                }
+            })
+
+        } catch (e) {
+            console.log('Error in saving profile', e.message);
+        }
+
+        console.log('Info saved: ', info);
+        setSaveLoading(false)
+        setIsEditing(false)
+    }
+
+    useEffect(
+        () => {
+            const unsub = onSnapshot(doc(db, 'users', currentUser.uid.toString()), doc => {
+                console.log('Current user info data:', doc.data());
+                const userInfo = doc.data().info
+
+                console.log('User info at the first time:', userInfo);
+                
+                // Error not loading at the first time but the second time
+                setInfo(prev => ({
+                    avatar: userInfo.avatar,
+                    name: userInfo.name,
+                    gender: userInfo.gender,
+                    birthday: userInfo.birthday.toDate(),
+                    phoneNumber: userInfo.phoneNumber,
+                    bio: userInfo.bio
+                }))
+                
+                setAvatar(userInfo.avatar)
+                setName(userInfo.name)
+                setGender(userInfo.gender)
+                setBirthday(userInfo.birthday.toDate())
+                setPhoneNumber(userInfo.phoneNumber)
+                setBio(userInfo.bio)
+            })
+
+
+        }
+    , [])
+
+    const handleClickEdit = () => {
+        setIsEditing(true)
+        // setNewInfo(info)
+    }
+
+    const handleClickBack = () => {
+        setIsEditing(false)
+    }
+
+    const [avatar, setAvatar] = useState('')
+    const [name, setName] = useState('') 
+    const [gender, setGender] = useState('none')
+    const [birthday, setBirthday] = useState(new Date())
+    const [phoneNumber, setPhoneNumber] = useState('')
+    const [bio, setBio] = useState('')
+
     return (
     <TouchableWithoutFeedback
         onPress={() => Keyboard.dismiss()}
     >
         <View style={{flex: 1}}>
             <BarHeader navigation={navigation} header={isEditing ? 'Edit Profile' : 'Profile'}/>
-            <Image source={avatar} style={styles.avatar} />
+            <Image source={userAvatar} style={styles.avatar} />
 
             <View style={styles.container}>
                 <View>
                     <View style={styles.box}>
-                        <Text> First name </Text>
-                        <TextInput editable={isEditing}  textAlign='right' placeholder='First name' style={{padding: 5}}></TextInput>
+                        <Text> Name </Text>
+                        <TextInput 
+                        onChangeText={text => setName(text)}
+                        editable={isEditing}
+                        textAlign='right' 
+                        placeholder='Name' 
+                        style={{padding: 5}}
+                        // value={info.name}
+                        // defaultValue={info.name}
+                        value={isEditing ? name : info.name}
+                        />
                     </View>
+
+                    <TouchableOpacity 
+                        style={styles.box}
+                        onPress={isEditing ?  openGenderRef : () => {}}
+                    >
+                        <Text>Gender</Text>
+                        <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+                            <TextInput
+                                editable={isEditing}
+                            >
+                                {gender}
+                            </TextInput>
+                            <Picker
+                                style={{width: 50}}
+                                accessibilityElementsHidden={true}
+                                ref={genderRef}
+                                onValueChange={(value, idx) => setGender(value)}
+                                selectedValue={isEditing ? gender : info.gender}
+                                enabled={isEditing}
+                                // itemStyle={{fontSize: 26}}
+                            >
+                                <Picker.Item label='Male' value='Male'/>
+                                <Picker.Item label='Female' value='Female'/>
+                                <Picker.Item label='None-binary' value='None-binary'/>
+                                <Picker.Item label='Prefer not to say' value='None'/>
+                            </Picker>
+                        </View>
+                    </TouchableOpacity>
                     
+                    <TouchableOpacity
+                        // disabled={isEditing}
+                        style={styles.box}
+                        onPress={isEditing ? handleOpenBirthday : () => {}}
+                    >
+                        <Text>Birth date</Text>
+                        <TextInput
+                        value={isEditing ? birthday.toDateString() : info.birthday.toDateString()}
+                        editable={isEditing}
+                        textAlign='right' 
+                        placeholder='Birth date'
+                        style={{padding: 5}}/>
+                        <DateTimePicker
+                            isVisible={isBirthdayVisible}
+                            mode={'date'}
+                            onCancel={handleCancelBirthday}
+                            onConfirm={handleConfirmBirthday}
+                        />
+                    </TouchableOpacity>
+
                     <View style={styles.box}>
-                        <Text> Last name </Text>
-                        <TextInput editable={isEditing} textAlign='right' placeholder='Last name' style={{padding: 5}}></TextInput>
+                        <Text>Phone number</Text>
+                        <TextInput
+                        value={isEditing ? phoneNumber : info.phoneNumber}
+                        onChangeText={text => setPhoneNumber(text)}
+                        editable={isEditing}
+                        textAlign='right'
+                        placeholder='Phone number'
+                        style={{padding: 5}}/>
                     </View>
 
                     <View style={styles.box}>
-                        <Text> Gender </Text>
-                        <TextInput editable={isEditing} textAlign='right' placeholder='Gender' style={{padding: 5}}></TextInput>
-                    </View>
-                    
-                    <View style={styles.box}>
-                        <Text> Birth date</Text>
-                        <TextInput editable={isEditing} textAlign='right' placeholder='Birth date' style={{padding: 5}}></TextInput>
-                    </View>
-
-                    <View style={styles.box}>
-                        <Text> Email</Text>
-                        <TextInput editable={isEditing} textAlign='right' placeholder='Email date' style={{padding: 5}}></TextInput>
+                        <Text>Bio</Text>
+                        <TextInput
+                            value={isEditing ? bio : info.bio}
+                            onChangeText={text => setBio(text)}
+                            editable={isEditing}
+                            textAlign='right'
+                            placeholder='Bio'
+                            style={{padding: 5}}
+                        />
                     </View>
                 </View>
 
@@ -49,7 +228,7 @@ export default function AccountScreen({setOpenAccount, navigation}) {
                     <View style={styles.buttonContainer}>
                         <TouchableOpacity
                         style={styles.editButton}
-                        onPress={() => setIsEditing(true)}
+                        onPress={handleClickEdit}
                         >
                             <Text style={styles.buttonText}>EDIT</Text>
                         </TouchableOpacity>
@@ -58,16 +237,16 @@ export default function AccountScreen({setOpenAccount, navigation}) {
                     <View style={styles.buttonContainer}>
                         <TouchableOpacity
                         style={styles.editButton}
-                        onPress={() => setIsEditing(false)}
+                        onPress={handleClickBack}
                         >
                             <Text style={styles.buttonText}>BACK</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                         style={styles.editButton}
-                        onPress={() => setIsEditing(false)}
+                        onPress={handleClickSave}
                         >
-                            <Text style={styles.buttonText}>SAVE</Text>
+                            {saveLoading ? <ActivityIndicator size='small' color='black' /> : <Text style={styles.buttonText}>SAVE</Text> }
                         </TouchableOpacity>
                     </View>
                     

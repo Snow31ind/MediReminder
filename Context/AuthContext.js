@@ -3,7 +3,7 @@ import {useState, useReducer, useContext, useEffect, createContext } from "react
 import React from "react";
 import { auth, db } from "../firebase/Config";
 import { Alert } from "react-native";
-import { doc, setDoc } from "@firebase/firestore";
+import {query, orderBy, addDoc, collection, doc, getDoc, getDocs, serverTimestamp, setDoc, Timestamp, updateDoc } from "@firebase/firestore";
 const AuthContext = createContext();
 
 export function useAuth() {
@@ -11,192 +11,171 @@ export function useAuth() {
 }
 
 export function AuthProvider({children}) {
-    
+
+    const usersRef = collection(db, 'users')
+    const [userDoc, setUserDoc] = useState()
+
     const [currentUser,setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const initialState = {
-        isLoading: true,
-        isSignOut: false,
-        userToken: null,
-    }
-    
-    const reduce = (prevState, action) => {
-        switch (action.type) {
-          case 'RESTORE_TOKEN' :
-            return {
-              ...prevState,
-              userToken: action.token,
-              isLoading: false,
-            };
-    
-            case 'SIGN_IN' :
-              return {
-                ...prevState,
-                userToken: action.token,
-                isSignOut: false,
-              };
-    
-            case 'SIGN_OUT' :
-            return {
-              ...prevState,
-              userToken: null,
-              isSignOut: true,
-            };
-        }
-    }
-    
-    const [state, dispatch] = useReducer(reduce, initialState);
+    const [error, setError] = useState()
+
+    // const [medications, setMedications] = useState([])
+
+    // useEffect(
+    //   () => {
+    //     fetchData()
+    //     console.log('Medications at AuthContext:', medications);
+    //   }
+    // , [currentUser])
+
+    // const fetchData = async (user) => {
+    //   const medicationsRef = collection(db, 'users', user.uid, 'medications')
+    //   const medicationsDocs = await getDocs(medicationsRef)
+
+    //   setMedications(medicationsDocs.docs.map( (medication) => {
+    //     const getReminders = async () => {
+    //       const remindersRef = collection(db, 'users', user.uid, 'medications', medication.id, 'reminders')
+    //       const remindersDocs = await getDocs(remindersRef)
+          
+    //       return remindersDocs.docs.map(reminder => ({...reminder.data(), id: reminder.id}))
+    //     }
+
+    //     // return {...medication.data(), id: medication.id, reminders: reminders}
+    //     return {...medication.data(), id: medication.id}
+    //     })
+    //   )
+  
+    // }
+
+    // const fetchData = async (user) => {
+    //   setMedications(prev => [])
+  
+    //   const medicationsRef = collection(db, 'users', user.uid, 'medications')
+    //   const medicationsDocs = await getDocs(medicationsRef)
+        
+    //   medicationsDocs.docs.map( (medication) => {
+    //     const getReminders = async () => {
+    //       const remindersRef = query(collection(db, 'users', user.uid, 'medications', medication.id, 'reminders'), orderBy('timestamp'))
+    //       const remindersDocs = await getDocs(remindersRef)
+          
+    //       return {...medication.data(), id: medication.id, reminders: remindersDocs.docs.map(reminder => ({...reminder.data(), id: reminder.id, timestamp: reminder.data().timestamp.toDate()}))}
+    //     }
+        
+    //     getReminders()
+    //     .then( medication => {
+    //       setMedications(prev => [...prev, medication])
+    //     }).catch(e => console.log(e))
+    //     })
+  
+    // }
 
     async function login(email, password) {
+        // setError()
+        console.log('Login runs');
         await signInWithEmailAndPassword(auth, email, password)
         .then( userCredentials =>{
           const userInf = userCredentials.user;
-
-          console.log('User id at App is:', userInf.uid);
-          dispatch({type: 'SIGN_IN', token: 'dummy-auth-token'});
-
+          console.log('Login then runs');
+            // setCurrentUser(userInf)
+            // fetchData(userInf)
+            // console.log('Signup runs');
         })
         .catch(error => {
-          Alert.alert('Error', 'Invalid email/password.')
+          setError('Invalid email/password')
+          // Alert.alert('Error', 'Invalid email/password.')
           console.log('Error in signing in', error.message);
         })
     }
 
-    async function signup(email, password, confirmedPassword, info) {
-        if (password != '' && password === confirmedPassword) {
-            // await createUserWithEmailAndPassword(auth, email, password)
-
-            createUserWithEmailAndPassword(auth, email, password)
+    async function signup(email, password, confirmedPassword) {
+            await createUserWithEmailAndPassword(auth, email, password)
             .then( userCredentials => {
-              console.log(userCredentials.user);
-              
-              const assignInfo = async (data) => {
-                  const docRef = doc(db, 'users', userCredentials.user.uid)
-                  try {
-                    setDoc(docRef, { info: data})
-                  } catch (e) {
-                    console.log('Error in inserting user\'s info', e.message);
+              const user = userCredentials.user
+
+              const createAccount = async () => {
+                await setDoc(doc(db, 'users', user.uid.toString()), {
+                  account : {
+                    email: email,
+                    createdAt: serverTimestamp()
                   }
+                })
               }
-
-              assignInfo(info);
-
-              console.log('A new user has signed up');
               
-              dispatch({type: 'SIGN_IN', token: 'dummy-auth-token'})
+              const initializeProfile = async () => {
+                const userDocRef = doc(db, 'users', user.uid)
+                // const userDoc = await getDoc(userDoc)
+                // const profile = user.data().info
+
+                    const defaultInfo = {
+                        avatar: '',
+                        name: user.uid.toString(),
+                        gender: 'none',
+                        birthday: Timestamp.fromDate(new Date()),
+                        phoneNumber: '',
+                        bio: ''
+                    }
+
+                    try {
+                        await updateDoc(userDocRef, {info: defaultInfo})
+                    } catch (error) {
+                        console.log('Error in initializing profile:', error.message);
+                    }
+
+                    // setInfo(new Info())
+
+                    console.log('Initializing profile successfully');
+            }
+
+              createAccount()
+              initializeProfile()
+
+            console.log('Signup runs');
             })
             .catch (error => {
+              if (email.length == 0 || !email.includes('@')) setError('Invalid email')
+              else if (password.length == 0 || confirmedPassword == 0) setError('Password must be at least 6 characters') 
+              else if (password != confirmedPassword) setError('Different password and confirm password')
+              else setError('Already used email')
+
               console.log('Error in signing up a new user', error.message);
             })
-          } else {
-            Alert.alert('Error', 'Your password is different from your confirmed password')
-          }
     }
 
     function signout() {
         signOut(auth)
-        dispatch({type: 'SIGN_OUT'})
     }
+
+    const [info, setInfo] = useState({})
 
     useEffect(() => {
         try {
           const unsubcribe = onAuthStateChanged(auth, user => {
+            console.log('onAuthStateChanged runs');
             setCurrentUser(user)
             setLoading(false);
           })
 
-          return unsubcribe
-          // return () => setCurrentUser(null)
+          // return unsubcriber
         } catch (e) {
           console.log('Error in auth state changed:', e.message);
         }
     }, [])
 
-//   useEffect(
-//     () => {
-//       const bootstrapAsync = async () => {
-//         let userToken;
-
-//         setTimeout(
-//           () => dispatch({type: 'RESTORE_TOKEN', token: userToken})
-//         , 3000)
-//         // dispatch({type: 'RESTORE_TOKEN', token: userToken});
-//       }
-//       console.log('App renders');
-
-//       return bootstrapAsync();
-//     }
-//   , [])
-
-//   const [count, setCount] = useState(0);
-//   const [userId, setUserId] = useState(null);
-//   const usersRef = collection(db, 'users');
-
-//   const authContext = useMemo(
-//     () => ({
-//         signIn: async (email, password) => {
-
-//           await signInWithEmailAndPassword(auth, email, password)
-//           .then( userCredentials =>{
-//             const userInf = userCredentials.user;
-//             // console.log(userInf);
-
-//             setUserId(() => userInf.uid);
-
-//             if(userId == '') console.log('True');
-
-//             console.log('User id at App is:', userInf.uid);
-
-//             dispatch({type: 'SIGN_IN', token: 'dummy-auth-token'});
-
-//             setCount(prevCount => prevCount + 1)
-//           })
-//           .catch(error => {
-//             Alert.alert('Error', 'Invalid email/password.')
-//             console.log('Error in signing in', error.message);
-//           })
-
-//         //   dispatch({type: 'SIGN_IN', token: 'dummy-auth-token'});
-          
-//         },
-
-//         signOut : () => dispatch({type: 'SIGN_OUT'}),
-
-//         signUp: async (email, password, confirmedPassword) => {
-
-//           if (password != '' && password === confirmedPassword) {
-//             createUserWithEmailAndPassword(auth, email, password)
-//             .then( userCredentials => {
-//               console.log(userCredentials.user);
-              
-//               setDoc(doc(db, 'users', userCredentials.user.uid), {
-//                 email: userCredentials.user.email
-//               });
-
-//               console.log('A new user has signed up');
-              
-//               dispatch({type: 'SIGN_IN', token: 'dummy-auth-token'})
-//             })
-//             .catch (error => {
-//               console.log('Error in signing up a new user', error.message);
-//             })
-//           } else {
-//             Alert.alert('Error', 'Your password is different from your confirmed password')
-//           }
-//         },
-//         userId: userId,
-
-//     })
-//   , [count]);
 
     const value = {
-        state,
+        // state,
         currentUser,
+        userDoc,
+        info,
+        error,
+        // medications,
 
         login,
         signup,
-        signout
+        signout,
+        setError,
+        // fetchData
     }
 
     return (

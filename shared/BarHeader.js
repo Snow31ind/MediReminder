@@ -13,51 +13,42 @@ export default function BarHeader({navigation, header}){
 
     return (
         <View style={styles.header}>
+            <MaterialIcons
+                style={styles.icon}
+                name='menu'
+                size={30}
+                onPress={openBarMenu}
+            />
+
+            <Text style={styles.headerText}>{header}</Text>
+
             <MaterialIcons 
-                style={styles.accountIcon}
+                style={styles.icon}
                 name='account-circle'
-                size={32}
+                size={30}
                 onPress={() => navigation.navigate('Account')}
             />
-
-            <Text style={styles.headerText}> {header} </Text>
-
-            <MaterialIcons
-            style={styles.barIcon}
-            name='menu'
-            size={32}
-            onPress={openBarMenu}
-            />
-
-            {/* <Modal
-                visible={openAccount}
-                animationType='slide'
-            >
-                <AccountScreen setOpenAccount={setOpenAccount}/>
-            </Modal> */}
 
         </View>
     )
 };
 
 const styles = StyleSheet.create({
-    barIcon: {
-        position: 'absolute',
-        right: 16
-    },
-    accountIcon: {
-        position: 'absolute',
-        left: 16,
+    icon : {
+        // marginBottom: 5
     },
     header: {
-        height: 80,
+        height: 70,
         flexDirection: 'row',
-        justifyContent: "center",
+        justifyContent: "space-around",
         backgroundColor: '#53cbff',
-        alignItems: 'center'
+        alignItems: 'flex-end',
+        padding: 10
     },
     headerText: {
-        fontSize: 20,
-        fontWeight: 'bold'
+        fontSize: 18,
+        fontWeight: 'bold',
+        width: '60%',
+        textAlign: 'center'
     }
 });
