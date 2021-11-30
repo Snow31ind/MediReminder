@@ -135,7 +135,6 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
   function ReminderModal({reminders, setReminders, reminder, idx}) {
     const [openReminderModal, setOpenReminderModal] = useState(false)
     const [quantity, setQuantity] = useState(reminder.quantity)
-
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [date, setDate] = useState('')
     const [time, setTime] = useState(reminder)

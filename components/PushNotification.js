@@ -2,8 +2,10 @@ import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import React, { usestart_date, useEffect, useRef } from 'react';
 import { Text, View, Button, Platform } from 'react-native';
-import { doc, getDoc} from "firebase/firestore"; 
+import { doc, getDoc, getDocs } from "firebase/firestore"; 
+import { useAuth } from '../Context/AuthContext'
 
+/*
 class Schedule {
   constructor (pill, start_date, end_date, hour, minute, frequency, times, quantity ) {
       this.pill = pill;
@@ -40,6 +42,8 @@ const scheduleConverter = {
   }
 };
 
+
+
 const ref_retrieve = doc(db, "schedule", "rw3pqHgqa7Xbl85sDyXU").withConverter(scheduleConverter);
 const docSnap = await getDoc(ref_retrieve);
 if (docSnap.exists()) {
@@ -49,7 +53,37 @@ if (docSnap.exists()) {
   console.log(schedule.toString());
 } else {
   console.log("No such document!");
+}*/
+const { currentUser } = useAuth()
+
+const [medications, setMedications] = useState([])
+const fetchData = async () => {
+  setMedications([])
+
+  const medicationsRef = collection(db, 'users', currentUser.uid, 'medications')
+  const medicationsDocs = await getDocs(medicationsRef)
+    
+  medicationsDocs.docs.map( (medication) => {
+    const getReminders = async () => {
+      const remindersRef = query(collection(db, 'users', currentUser.uid, 'medications', medication.id, 'reminders'), orderBy('timestamp'))
+      const remindersDocs = await getDocs(remindersRef)
+      
+      return {...medication.data(), id: medication.id, reminders: remindersDocs.docs.map(reminder => ({...reminder.data(), id: reminder.id, timestamp: reminder.data().timestamp.toDate()}))}
+    }
+
+    getReminders()
+    .then( medication => {
+      setMedications(prev => [...prev, medication])
+    }).catch(e => console.log(e))
+    })
+
 }
+
+useEffect(
+  () => {
+    fetchData()
+  }
+, [])
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -108,9 +142,9 @@ async function schedulePushNotification() {
       data: { data: 'goes here' },
     },
     trigger: { 
-      hour: schedule.hour,
-      minute: schedule.minute,
-      repeats: schedule.quantity 
+      hour: medications.hour,
+      minute:medications.minute,
+      repeats: true,
     },
   });
 }
