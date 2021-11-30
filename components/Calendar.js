@@ -32,7 +32,7 @@ export default function Calendar({currentUserId}){
         "reminder": {
           "id": "SBK51WRJ5PG",
           "timestamp": "08:00",
-          "quantity": 4
+          "quantity": 5
         }
       },
       {

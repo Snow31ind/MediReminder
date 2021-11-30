@@ -35,7 +35,6 @@ export default function BarHeader({navigation, header}){
             >
                 <AccountScreen setOpenAccount={setOpenAccount}/>
             </Modal> */}
-
         </View>
     )
 };
