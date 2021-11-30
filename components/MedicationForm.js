@@ -18,10 +18,13 @@ import { db } from "../firebase/Config";
 
 export default function MedicationForm({setRefresh, setOpenAddMedication ,addMedicationReminder, newMedication, newDate, setNewMedication, setNewDate, newTime, setNewTime}){
   // daily, specific, interval
+
+  const pages = ['Info', 'Frequency', 'Stock']
+  const [page, setPage] = useState(pages[0])
   
   const [reminderType, setReminderType] = useState('daily');
   const [doses, setDoses] = useState(0);
-  const [interval, setInterval] = useState(0);
+  const [interval, setInterval] = useState(1);
 
   const { currentUser } = useAuth() 
 
@@ -33,10 +36,10 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
       label: 'Every Day',
       value: 'Daily'
     },
-    {
-      label: 'Specific Days',
-      value: 'Specific'
-    },
+    // {
+    //   label: 'Specific Days',
+    //   value: 'Specific'
+    // },
     {
       label: 'Days Interval',
       value: 'Interval'
@@ -136,13 +139,21 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [date, setDate] = useState('')
     const [time, setTime] = useState(reminder)
+    const [note, setNote] = useState('')
 
     const getTime = (item) => {
       const h = item.hour
       const m = item.minute
-
-      return (h < 10 ? '0' + h.toString() : h.toString()) + ':' + (m < 10 ? '0' + m.toString() : m.toString())
-
+      const str = (
+        ((h % 12) < 10 ? '0' : '')
+        + (h % 12).toString()
+        + ':'
+        + (m < 10 ?  '0' : '')
+        + m.toString()
+        + ' '
+        + (h <= 12 ? 'AM' : 'PM')
+      )
+      return str
     }
 
     const showDatePicker = () => {
@@ -172,8 +183,11 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
       setTime( prevTime => ({...prevTime, quantity: prevTime.quantity + 1}))
     }
 
-    const handleClickDone = () => {
+    const handleClickWriteNote = (text) => {
+      setTime( prevTime => ({...prevTime, note: text}))
+    }
 
+    const handleClickDone = () => {
         setReminders( reminders.map( (reminder, index) => (index == idx ? time : reminder)))
         setOpenReminderModal(!openReminderModal)
         console.log(reminders);
@@ -201,11 +215,11 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
                 <Text style={{fontWeight: 'bold', fontSize: 16}} onPress={() => setOpenReminderModal(!openReminderModal)}>Cancel</Text>
-                <Text style={{}}>Edit Time And Doses</Text>
+                <Text style={{color: 'black'}}>Edit Time And Doses</Text>
                 <Text style={{fontWeight: 'bold', fontSize: 16}} onPress={handleClickDone}>Done</Text>
               </View>
 
-              <View style={{justifyContent: 'space-evenly', flex: 1}}>
+              <View style={{flex: 1, padding: 10}}>
                 <TouchableOpacity onPress={showDatePicker} style={styles.modalTime}>
                   <Text style={styles.modalText}>Time</Text>
                   <View style={{flexDirection: 'row'}}>
@@ -228,7 +242,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
                       onPress={handleClickDecrementDose}
                     >
                       <MaterialCommunityIcons
-                        color={time.quantity === 1 ? 'gray' : 'black'}
+                        color={time.quantity === 1 ? 'gray' : 'tomato'}
                         name='minus-box-outline'
                         size={40}
                       />
@@ -239,10 +253,25 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
                     <TouchableOpacity
                       onPress={handleClickIncrementDose}
                     >
-                      <MaterialCommunityIcons name='plus-box-outline' size={40}/>
+                      <MaterialCommunityIcons color='#53cbff' name='plus-box-outline' size={40}/>
                     </TouchableOpacity>
                   </View>
                 </View>
+
+                <View style={styles.modalNote}>
+                  <Text style={styles.modalText}>Note</Text>
+                  <View style={{padding: 10, height: 100, borderWidth: 1, borderRadius: 20}}>
+                    <TextInput
+                      defaultValue={reminder.note}
+                      placeholder='Write your note here'
+                      textAlignVertical='top'
+                      multiline={true}
+                      numberOfLines={5}
+                      onChangeText={text => handleClickWriteNote(text)}
+                    />
+                  </View>
+                </View>
+
               </View>
             </View>
           </View>
@@ -270,8 +299,6 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
     setStartDate(day)
     setStartDatePickerVisibility(false);
 
-    // setMedication( prevMedication => ({...prevMedication, startDate: day}) )
-    // setStartDate(day)
   };
 
   const showEndDatePicker = () => {
@@ -287,11 +314,10 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
     setEndDate(day)
     setEndDatePickerVisibility(false);
 
-    // setMedication( prevMedication => ({...prevMedication, endDate: day}) )
   };
 
   
-  const handleClickDoneAddMedication = () => {
+  const handleClickDoneAddMedication = async () => {
 
     // console.log('Medication details:',medication);
     const medication = {
@@ -315,7 +341,8 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
           pillsInStock: parseInt(pillsInStock),
           startDate: Timestamp.fromDate(startDate),
           endDate: endDate ? Timestamp.fromDate(endDate) : null,
-          refill: refill
+          refill: refill,
+          updatedAt: serverTimestamp()
         }).then( doc => {
           // console.log(doc.id.toString());
           const userMedicationRemindersRef = collection(db, 'users', currentUser.uid.toString(), 'medications', doc.id.toString(), 'reminders')
@@ -326,7 +353,9 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
             for(let plan of plans) {
               await addDoc(userMedicationRemindersRef, {
                 ...plan,
-                timestamp: Timestamp.fromDate(plan.timestamp)
+                timestamp: Timestamp.fromDate(plan.timestamp),
+                updatedAt: Timestamp.fromDate(plan.updatedAt)
+
               })
             }
           }
@@ -338,11 +367,9 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
         console.log('Error in inserting a new medication plan:', error.message);
       }
     }
-
-    createMedicationPlan()
-    setOpenAddMedication(false)
-    
-    setRefresh()
+      createMedicationPlan()
+      setRefresh()
+      setOpenAddMedication(false)
   }
 
   const setUpReminders = (startDate, endDate) => {
@@ -358,28 +385,34 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
             timestamp: new Date(date),
             quantity: plan.quantity,
             isConfirmed: false,
-            isMissed: false
+            isMissed: false,
+            note: plan.note,
+            updatedAt: new Date(date)
           }]
         })
     
-        date.setDate(date.getDate() + 1)
+        date.setDate(date.getDate() + parseInt(interval))
       }
     } else {
       let date = new Date(startDate)
       let count = parseInt(pillsInStock)
       while (count > 0) {
         reminders.forEach( plan => {
-          date.setHours(plan.hour, plan.minute, 0)
-          res = [...res, {
-            timestamp: new Date(date),
-            quantity: plan.quantity,
-            isConfirmed: false,
-            isMissed: false
-          }]
-          count -= 1
+          if (count >= plan.quantity) {
+            date.setHours(plan.hour, plan.minute, 0)
+            res = [...res, {
+              timestamp: new Date(date),
+              quantity: plan.quantity,
+              isConfirmed: false,
+              isMissed: false,
+              note: plan.note,
+              updatedAt: new Date(date)
+            }]
+            count -= plan.quantity
+          } else count = 0
         })
 
-        date.setDate(date.getDate() + 1)
+        date.setDate(date.getDate() + parseInt(interval))
       }
     }
   
@@ -401,114 +434,197 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
     {
       hour: 8,
       minute: 0,
-      quantity: 1
+      quantity: 1,
+      note: ''
     }
     ])
 
   return (
+    <>
       <ScrollView style={styles.container}>
-
           <View style={styles.headerBar}>
             <TouchableOpacity onPress={() => setOpenAddMedication(false)} style={{flexDirection: 'row'}}>
-              {/* <MaterialIcons name='arrow-back' size={20} />
-              <Text>Back</Text> */}
-              <Text>Cancel</Text>
+              <MaterialIcons name='arrow-back' size={20} />
+              {/* <Text>Back</Text> */}
+              {/* <Text>Cancel</Text> */}
             </TouchableOpacity>
 
-            <Text>New Medicine</Text>
-            <TouchableOpacity onPress={handleClickDoneAddMedication} style={{flexDirection: 'row'}}>
-              <Text>Done</Text>
+            <Text>Add Medicine</Text>
+            <TouchableOpacity onPress={() => setPage('Frequency')} style={{flexDirection: 'row'}}>
+              <Text>Next</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.contentContainer}>
             <View style={styles.boxContainer}>
-              <Text style={styles.boxHeaderText}>Med Info</Text>
+              <Text style={styles.boxHeaderText}>MED INFO</Text>
               <View style={styles.input}>
                 <MaterialIcons name='medical-services' size={20} />
                 <TextInput
                   style={{marginLeft: 10, padding: 5}}
                   // onChangeText={text => setMedication( prevMedication => ({...prevMedication, name: text}))}
-                  textAlign='right'
+                  // textAlign='right'
                   onChangeText={text => setName(text)}
                   placeholder='Medication name'
+                  defaultValue={name}
                 />
               </View>
             </View>
+          </View>
+      </ScrollView>
 
-            <View style={styles.buttonBox}>
-              <Text style={styles.boxHeaderText}>Frequency?</Text>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={openFrequencyRef}
-              >
-                <Text>{frequency}</Text>
-                <Picker 
-                  ref={frequencyRef}
-                  onValueChange={(itemVlaue, itemIdx) => setFrequency(itemVlaue)} 
-                  selectedValue={frequency}
-                >
-                  {frequencyModes.map( (mode, idx) => <Picker.Item key={idx} label={mode.label} value={mode.value}/>)}
-                </Picker>
+      {/* Frequency Modal */}
+      <Modal
+        visible={page == 'Frequency' ? true : false}
+        animationType='slide'
+      >
+        <ScrollView style={styles.container}>
+            <View style={styles.headerBar}>
+              <TouchableOpacity onPress={() => setPage('Info')} style={{flexDirection: 'row'}}>
+                <MaterialIcons name='arrow-back' size={20} />
+                {/* <Text>Back</Text> */}
+                {/* <Text>Cancel</Text> */}
+              </TouchableOpacity>
+
+              <Text>Schedule</Text>
+              <TouchableOpacity onPress={() => setPage('Stock')} style={{flexDirection: 'row'}}>
+                <Text>Next</Text>
+                {/* <MaterialIcons name='arrow-forward' size={20}/> */}
               </TouchableOpacity>
             </View>
 
-            { frequency === 'Interval' ?
-            <View style={styles.buttonBox}>
-              <Text>How often?</Text>
-              <View style={styles.button}>
-                <Text>Every</Text>
-                <TextInput placeholder='days' keyboardType='numeric' />
-              </View>
-            </View>
-            :
-            <></>
-            }
+            <View style={styles.contentContainer}>
 
-            <View style={styles.buttonBox}>
-              <Text style={styles.boxHeaderText}>How many times a day?</Text>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={openTimesRef}
-              >
-                <Text>{times}</Text>
-                <Picker
-                  ref={timeRef}
-                  onValueChange={(itemValue, itemIdx) => {
-                    // console.log('Item value is:', itemValue);
-                    setTimes(() => itemValue)
-                  }}
-                  selectedValue={times}
-                >
-                  {timeModes.map( (mode, idx) => <Picker.Item key={idx} label={mode.label} value={mode.value}/>)}
-                </Picker>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.buttonBox}>
-              <Text style={styles.boxHeaderText}>Set up your reminders</Text>
-              <View style={{}}>
-                { reminders.map( (reminder, idx) => <ReminderModal key={idx} reminders={reminders} setReminders={setReminders} idx={idx} reminder={reminder} />)}
-              </View>
-            </View>
-            
-            {
-              frequency === 'Specific' ?
               <View style={styles.buttonBox}>
-                <Text>Which days?</Text>
-                { dateInWeek.map( (day,idx) => <DayChecker key={idx} day={day}/>)}
+                <Text style={styles.boxHeaderText}>FREQUENCY</Text>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={openFrequencyRef}
+                >
+                  <Text>{frequency}</Text>
+                  <Picker 
+                    ref={frequencyRef}
+                    onValueChange={(itemValue, itemIdx) => setFrequency(itemValue)} 
+                    selectedValue={frequency}
+                  >
+                    {frequencyModes.map( (mode, idx) => <Picker.Item key={idx} label={mode.label} value={mode.value}/>)}
+                  </Picker>
+                </TouchableOpacity>
+              </View>
+
+              { frequency === 'Interval' ?
+              <View style={styles.buttonBox}>
+                <Text style={styles.boxHeaderText}>HOW OFTEN?</Text>
+                <View style={styles.button}>
+                  <Text>Every</Text>
+                  <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+                    <TextInput
+                      underlineColorAndroid='black'
+                      textAlign='center'
+                      style={{marginRight: 10, padding: 5}}
+                      onChangeText={text => setInterval(text)}
+                      placeholder='2'
+                      keyboardType='numeric'
+                    />
+                    <Text>days</Text>
+                  </View>
+                </View>
               </View>
               :
               <></>
-            }
+              }
 
+              <View style={styles.buttonBox}>
+                <Text style={styles.boxHeaderText}>HOW MANY TIMES A DAY?</Text>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={openTimesRef}
+                >
+                  <Text>{times}</Text>
+                  <Picker
+                    ref={timeRef}
+                    onValueChange={(itemValue, itemIdx) => {
+                      // console.log('Item value is:', itemValue);
+                      setTimes(() => itemValue)
+                    }}
+                    selectedValue={times}
+                  >
+                    {timeModes.map( (mode, idx) => <Picker.Item key={idx} label={mode.label} value={mode.value}/>)}
+                  </Picker>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.buttonBox}>
+                <Text style={styles.boxHeaderText}>SET TIME AND DOSES</Text>
+                <View style={{}}>
+                  { reminders.map( (reminder, idx) => <ReminderModal key={idx} reminders={reminders} setReminders={setReminders} idx={idx} reminder={reminder} />)}
+                </View>
+              </View>
+              
+              {
+                frequency === 'Specific' ?
+                <View style={styles.buttonBox}>
+                  <Text>Which days?</Text>
+                  { dateInWeek.map( (day,idx) => <DayChecker key={idx} day={day}/>)}
+                </View>
+                :
+                <></>
+              }
+
+               <View style={{flexDirection: 'row'}}>
+                <Text>Starts in </Text>
+                <Text onPress={showStartDatePicker} style={styles.dayText}>{startDate.toDateString()}</Text>
+                <DateTimePicker
+                  isVisible={isStartDatePickerVisible}
+                  mode={'date'}
+                  onCancel={hideStartDatePicker}
+                  onConfirm={handleConfirmStartDate}
+                />
+              </View>
+
+              <View style={{flexDirection: 'row'}}>
+                {endDate ? <Text>Ends in </Text>: <Text>Tap to set </Text>}
+                <Text  onPress={showEndDatePicker} style={styles.dayText}>{endDate ? endDate.toDateString() : 'end date'}</Text>
+                <DateTimePicker
+                  isVisible={isEndDatePickerVisible}
+                  mode={'date'}
+                  onCancel={hideEndDatePicker}
+                  onConfirm={handleConfirmEndDate}
+                />
+              </View>
+
+            </View>
+        </ScrollView>
+      </Modal>
+
+      {/* Stock modal */}
+      <Modal
+        visible={page == 'Stock' ? true : false}
+        animationType='slide'
+      >
+        <ScrollView style={styles.container}>
+            <View style={styles.headerBar}>
+              <TouchableOpacity onPress={() => setPage('Frequency')} style={{flexDirection: 'row'}}>
+                <MaterialIcons name='arrow-back' size={20} />
+                {/* <Text>Back</Text> */}
+                {/* <Text>Cancel</Text> */}
+              </TouchableOpacity>
+
+              <Text>More Details</Text>
+              <TouchableOpacity onPress={handleClickDoneAddMedication} style={{flexDirection: 'row'}}>
+                <Text>Done</Text>
+                {/* <MaterialIcons name='arrow-forward' size={20}/> */}
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.contentContainer}>
             <View style={styles.buttonBox}>
-              <Text style={styles.boxHeaderText}>How many pills do you have in your stock?</Text>
+              <Text style={styles.boxHeaderText}>HOW MANY PILLS DO YOU HAVE?</Text>
                 <View style={styles.button}>
                   <Text>Pills in stock</Text>
                   <TextInput
-                    // onChangeText={text => setMedication( prev => ({...prev, pillsInStock: text}))}
-                    // onChangeText={text => setPis(text)}
+                    defaultValue={pillsInStock}
+                    textAlign='right'
                     onChangeText={text => setPillsInStock(text)}
                     placeholder='pills in stock'
                     keyboardType='numeric'
@@ -517,7 +633,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
             </View>
 
             <View style={styles.buttonBox}>
-              <Text style={styles.boxHeaderText}>Refill</Text>
+              <Text style={styles.boxHeaderText}>REFILL</Text>
                 <View style={styles.button}>
                   <Text>Refill reminder</Text>
                   <ToggleSwitch
@@ -529,40 +645,11 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
                 </View>
             </View>
 
-            
-            <View style={{flexDirection: 'row'}}>
-              <Text>Starts in </Text>
-              <Text onPress={showStartDatePicker} style={styles.dayText}>{startDate.toDateString()}</Text>
-              <DateTimePicker
-                isVisible={isStartDatePickerVisible}
-                mode={'date'}
-                onCancel={hideStartDatePicker}
-                onConfirm={handleConfirmStartDate}
-              />
             </View>
+        </ScrollView>
+      </Modal>
 
-            <View style={{flexDirection: 'row'}}>
-              {endDate ? <Text>Ends in </Text>: <Text>Tap to set </Text>}
-              <Text  onPress={showEndDatePicker} style={styles.dayText}>{endDate ? endDate.toDateString() : 'end date'}</Text>
-              <DateTimePicker
-                isVisible={isEndDatePickerVisible}
-                mode={'date'}
-                onCancel={hideEndDatePicker}
-                onConfirm={handleConfirmEndDate}
-              />
-            </View>
-
-          </View>
-
-          {/* <Modal visible={openSchedule} animationType='slide'>
-            <FrequencyInf />
-          </Modal>
-
-          <Modal visible={openDetails} animationType='slide'>
-            <Details/>
-          </Modal> */}
-
-      </ScrollView>
+    </>
     )
 };
 
@@ -580,7 +667,7 @@ const styles = StyleSheet.create({
   },
   button : {
     flexDirection: 'row', 
-    flex: 1, 
+    // flex: 1, 
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#53cbff',
@@ -593,7 +680,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 10,
     backgroundColor: '#53cbff',
-    borderRadius: 20,
+    borderRadius: 15,
     marginVertical: 5
   },
   modal : {
@@ -606,8 +693,9 @@ const styles = StyleSheet.create({
       // height: 80,
       flexDirection: 'row',
       justifyContent: 'space-between',
+      backgroundColor: '#53cbff',
       // borderBottomWidth: 1,
-      // padding: 5
+      padding: 10
   },
   modalContainer : {
     position: 'absolute',
@@ -616,31 +704,30 @@ const styles = StyleSheet.create({
     height: '50%',
     // justifyContent: '',
     // backgroundColor: 'gray'
-    backgroundColor: '#53cbff',
-    padding: 10
+    backgroundColor: 'white',
+    // padding: 10
   },
   modalDose: {
     // flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 20,
     // flex: 1
   },
   modalTime : {
     flexDirection: 'row',
-    justifyContent: 'space-between'
-  },  
+    justifyContent: 'space-between',
+    marginTop: 10
+  },
+  modalNote: {
+    marginTop: 20
+  }, 
   buttonBox : {
     marginVertical: 10
   },
   boxHeaderText : {
-    // marginLeft: 5,
-    // marginTop: 5,
+    marginLeft: 10,
+    marginBottom: 3,
     fontWeight: 'bold'
-  },
-  contentContainer: {
-    flex: 1,
-    // backgroundColor: '#53cbff',
-    // padding: 10,
   },
   input : {
     flexDirection: 'row',
@@ -649,11 +736,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#53cbff',
     height: 60,
     borderRadius: 20,
-    justifyContent: 'space-between'
+    // justifyContent: 'space-between'
     // color: 'white'
   },
   contentContainer : {
-    padding: 10
+    padding: 15
   },
 
   checkBox : {

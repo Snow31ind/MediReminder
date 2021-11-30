@@ -1,4 +1,4 @@
-import React, {useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import { Image, StyleSheet, View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Alert, Modal, ActivityIndicator } from "react-native";
 import {MaterialIcons} from '@expo/vector-icons';
 import {MaterialCommunityIcons} from '@expo/vector-icons';
@@ -7,6 +7,7 @@ import {Ionicons} from '@expo/vector-icons';
 import Logo from '../assets/MediReminderLogo.png'
 import { useAuth } from "../Context/AuthContext";
 import { Link } from "@react-navigation/native";
+import { GlobalStyles } from "../shared/GlobalStyles";
 
 export default function SignUpScreen({navigation}) {
 
@@ -17,7 +18,25 @@ export default function SignUpScreen({navigation}) {
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     
-    const { signup } = useAuth()
+    const { signup, error, setError } = useAuth()
+
+    const [passwordError, setPasswordError] = useState()
+    useEffect(
+        () => {
+            if (password.length > 0 && password.length < 6) setPasswordError('Password length must be at least 6')
+            else setPasswordError()
+        }
+    , [password])
+
+    const [confirmPasswordError, setConfirmPasswordError] = useState()
+    useEffect(
+        () => {
+            if (confirmPassword != password) setConfirmPasswordError('Confirm password must be identical to password')
+            else setConfirmPasswordError()
+        }
+    , [confirmPassword])
+
+
 
 
     const handleClick = async () => {
@@ -54,44 +73,33 @@ export default function SignUpScreen({navigation}) {
 	<TouchableWithoutFeedback onPress={() => {Keyboard.dismiss()}}>            
 		<View style={styles.container}>
 			<View style={styles.headerBar}>
-					<MaterialIcons name='arrow-back' size={20} onPress={() => navigation.goBack()}/>
+					<MaterialIcons
+                    name='arrow-back' 
+                    size={20}
+                    onPress={() => {
+                        setError()
+                        navigation.goBack()}
+                    }/>
 			</View>
 
 			<View>
 					<View style={styles.header}>
 							<Image source={Logo} style={styles.logo}/>
 							<Text>Let's get started</Text>
-							<Text>Create an account to MediReminder get all features</Text>
+							<Text>Create a MediReminder account to get all features</Text>
 					</View>
 
 					<View style={styles.inputContainer}>
-						{/* <View style={styles.input}>
-							<MaterialCommunityIcons name='account-outline' size={28}/>
-							<TextInput
-									style={{marginLeft: 15, width: '80%'}}
-									placeholder='Full name'
-									onChangeText={ text => setName(text) }
-							/>
-						</View> */}
 
 						<View style={styles.input}>
-							{/* <MaterialCommunityIcons name='email-outline' size={28}/> */}
 							<MaterialCommunityIcons name='account-outline' size={28}/>
 							<TextInput
 									style={{marginLeft: 15, width: '80%'}}
 									placeholder='Email'
 									onChangeText={ text => setEmail(text) }
+                                    onFocus={() => setError()}
 							/>
 						</View>
-								
-						{/* <View style={styles.input}>
-							<MaterialIcons name='phone-iphone' size={28} />
-							<TextInput
-									style={{marginLeft: 15, width: '80%'}}
-									placeholder='Phone number'
-									onChangeText={ text => setPhoneNumber(text) }
-							/>
-						</View> */}
 						
 						<View style={styles.input}>
 							<Ionicons name='lock-closed-outline' size={28}/>
@@ -100,6 +108,7 @@ export default function SignUpScreen({navigation}) {
 									style={{marginLeft: 15, width: '80%'}}
 									placeholder='Password'
 									onChangeText={ text => setPassword(text) }
+                                    onFocus={() => setError()}
 							/>
 						
 							<Ionicons
@@ -109,6 +118,7 @@ export default function SignUpScreen({navigation}) {
 								style={{alignSelf: 'center'}}
 							/>
 						</View>
+                        {passwordError && <Text style={GlobalStyles.warning}>{passwordError}</Text>}
 
 						<View style={styles.input}>
 							<Ionicons name='lock-closed-outline' size={28}/>
@@ -117,6 +127,7 @@ export default function SignUpScreen({navigation}) {
 									style={{marginLeft: 15, width: '80%'}}
 									placeholder='Confirm password'
 									onChangeText={ text => setConfirmPassword(text) }
+                                    onFocus={() => setError()}
 							/>
 
 							<Ionicons
@@ -126,16 +137,19 @@ export default function SignUpScreen({navigation}) {
 								style={{alignSelf: 'center'}}
 							/>
 						</View>
+                        {confirmPasswordError && <Text style={GlobalStyles.warning}>{confirmPasswordError}</Text>}
+
+                        {error && <Text style={[GlobalStyles.error, {alignSelf: 'center'}]}>{error}</Text>}
 								
 						<View>
                             <TouchableOpacity
-                            // onPress={clickLogIn}
                             disabled={loading}
                             onPress={handleClick}
                             >
                                 <View style={styles.logInButton}>
-                                {loading ?
+                                { loading ?
                                     <ActivityIndicator size="large" color='black'/>
+                                    // <Text>Hi</Text>
                                     :  
                                     <Text style={{fontSize: 20, fontWeight: 'bold'}}>SIGN UP</Text>
                                 }
@@ -144,7 +158,13 @@ export default function SignUpScreen({navigation}) {
 					
 							<View style={styles.footer}>
 									<Text>Already have an acount?</Text>
-									<Link to='/Login' style={{color: 'tomato', fontWeight: 'bold'}}> Login here</Link>
+									<Text onPress={() => {
+                                        setError()
+                                        navigation.navigate('Login')}
+                                        }
+                                        style={{color: 'tomato', fontWeight: 'bold'}}
+                                    > Login here
+                                    </Text>
 							</View>
 						</View>
 

@@ -157,18 +157,27 @@ export default function AccountScreen({setOpenAccount, navigation}) {
                         onPress={isEditing ?  openGenderRef : () => {}}
                     >
                         <Text>Gender</Text>
-                        {/* <Text>{gender}</Text> */}
-                        <Picker
-                            style={{width: 120}}
-                            accessibilityElementsHidden={true}
-                            ref={genderRef}
-                            onValueChange={(value, idx) => setGender(value)}
-                            selectedValue={isEditing ? gender : info.gender}
-                        >
-                            <Picker.Item label='Male' value='male'/>
-                            <Picker.Item label='Female' value='female'/>
-                            <Picker.Item label='None' value='none'/>
-                        </Picker>
+                        <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+                            <TextInput
+                                editable={isEditing}
+                            >
+                                {gender}
+                            </TextInput>
+                            <Picker
+                                style={{width: 50}}
+                                accessibilityElementsHidden={true}
+                                ref={genderRef}
+                                onValueChange={(value, idx) => setGender(value)}
+                                selectedValue={isEditing ? gender : info.gender}
+                                enabled={isEditing}
+                                // itemStyle={{fontSize: 26}}
+                            >
+                                <Picker.Item label='Male' value='Male'/>
+                                <Picker.Item label='Female' value='Female'/>
+                                <Picker.Item label='None-binary' value='None-binary'/>
+                                <Picker.Item label='Prefer not to say' value='None'/>
+                            </Picker>
+                        </View>
                     </TouchableOpacity>
                     
                     <TouchableOpacity
@@ -178,7 +187,7 @@ export default function AccountScreen({setOpenAccount, navigation}) {
                     >
                         <Text>Birth date</Text>
                         <TextInput
-                        value={isEditing ? birthday.toLocaleDateString() : info.birthday.toLocaleDateString()}
+                        value={isEditing ? birthday.toDateString() : info.birthday.toDateString()}
                         editable={isEditing}
                         textAlign='right' 
                         placeholder='Birth date'
