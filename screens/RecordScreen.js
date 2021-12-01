@@ -10,37 +10,37 @@ import { db } from "../firebase/Config";
 const screenWidth = Dimensions.get('window').width;
 
 export default function RecordScreen({navigation}){
-  const { currentUser } = useAuth()
+  const { currentUser, medications, setMedications } = useAuth()
 
-  const [medications, setMedications] = useState([])
+  // const [medications, setMedications] = useState([])
 
-  const fetchData = async () => {
-    setMedications([])
+  // const fetchData = async () => {
+  //   setMedications([])
 
-    const medicationsRef = collection(db, 'users', currentUser.uid, 'medications')
-    const medicationsDocs = await getDocs(medicationsRef)
+  //   const medicationsRef = collection(db, 'users', currentUser.uid, 'medications')
+  //   const medicationsDocs = await getDocs(medicationsRef)
       
-    medicationsDocs.docs.map( (medication) => {
-      const getReminders = async () => {
-        const remindersRef = query(collection(db, 'users', currentUser.uid, 'medications', medication.id, 'reminders'), orderBy('timestamp'))
-        const remindersDocs = await getDocs(remindersRef)
+  //   medicationsDocs.docs.map( (medication) => {
+  //     const getReminders = async () => {
+  //       const remindersRef = query(collection(db, 'users', currentUser.uid, 'medications', medication.id, 'reminders'), orderBy('timestamp'))
+  //       const remindersDocs = await getDocs(remindersRef)
         
-        return {...medication.data(), id: medication.id, reminders: remindersDocs.docs.map(reminder => ({...reminder.data(), id: reminder.id, timestamp: reminder.data().timestamp.toDate()}))}
-      }
+  //       return {...medication.data(), id: medication.id, reminders: remindersDocs.docs.map(reminder => ({...reminder.data(), id: reminder.id, timestamp: reminder.data().timestamp.toDate()}))}
+  //     }
 
-      getReminders()
-      .then( medication => {
-        setMedications(prev => [...prev, medication])
-      }).catch(e => console.log(e))
-      })
+  //     getReminders()
+  //     .then( medication => {
+  //       setMedications(prev => [...prev, medication])
+  //     }).catch(e => console.log(e))
+  //     })
 
-  }
+  // }
 
-  useEffect(
-    () => {
-      fetchData()
-    }
-  , [])
+  // useEffect(
+  //   () => {
+  //     fetchData()
+  //   }
+  // , [])
 
     const [openOverall, setOpenOverall] = useState(true);
     const [openDaily, setOpenDaily] = useState(false);
@@ -64,7 +64,7 @@ export default function RecordScreen({navigation}){
     }
 
     const CustomProgressCircle = ({medication, idx, ...rest}) => {
-      const progress = (medication.reminders.filter(reminder => {return reminder.isConfirmed == true}).length / medication.reminders.length).toFixed(4)
+      const progress = (medication.reminders.filter(reminder => {return reminder.isConfirmed == true}).length / medication.reminders.length).toFixed(2)
       const confirmedReminders = medication.reminders.filter(reminder => reminder.isConfirmed == true).length
       const missedReminders = medication.reminders.filter(reminder => reminder.isMissed == true).length
       const remainingReminders = medication.reminders.length - (confirmedReminders + missedReminders)

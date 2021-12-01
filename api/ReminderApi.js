@@ -61,6 +61,7 @@ export const unconfirmReminder = async (userId, medicationId, reminderId) => {
 
   // Update field isConfirmed
   const reminderDocRef = doc(db, 'users', userId, 'medications', medicationId, 'reminders', reminderId)
+  
   try {
     await updateDoc(reminderDocRef, {
       isConfirmed: false

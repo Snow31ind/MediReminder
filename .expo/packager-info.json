@@ -1,10 +1,10 @@
 {
   "devToolsPort": 19002,
-  "expoServerPort": null,
-  "packagerPort": null,
+  "expoServerPort": 19000,
+  "packagerPort": 19000,
   "packagerPid": null,
-  "expoServerNgrokUrl": null,
-  "packagerNgrokUrl": null,
-  "ngrokPid": null,
+  "expoServerNgrokUrl": "https://6z-h4g.snowblind151.medireminder.exp.direct",
+  "packagerNgrokUrl": "https://packager.6z-h4g.snowblind151.medireminder.exp.direct",
+  "ngrokPid": 11076,
   "webpackServerPort": null
 }

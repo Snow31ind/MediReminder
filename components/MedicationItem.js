@@ -5,12 +5,12 @@ import { confirmReminder, deleteReminder, rescheduleReminder, unconfirmReminder 
 import pillImg from '../assets/medicationPill.png';
 import { useAuth } from '../Context/AuthContext';
 import {Feather ,FontAwesome ,FontAwesome5 ,MaterialIcons, MaterialCommunityIcons} from '@expo/vector-icons'
-import { toTimeString } from '../shared/Functions';
+import { removeReminder, toTimeString, updateMedicationFE, updateReminder } from '../shared/Functions';
 import DateTimePicker from 'react-native-modal-datetime-picker';
 import EditReminder from './EditReminder';
 import MedicationModal from './MedicationModal';
 import { Timestamp } from '@firebase/firestore';
-export default function MedicationItem({navigation, reminders, setReminders, setRefresh, reminder}) {
+export default function MedicationItem({navigation, reminders, setReminders, reminder}) {
 
     const [openModal, setOpenModal] = useState(false);
 
@@ -30,42 +30,51 @@ export default function MedicationItem({navigation, reminders, setReminders, set
     //   refill: reminder.refill
     // }
 
-    const { currentUser } = useAuth()
+    const { currentUser, medications, setMedications } = useAuth()
 
     const handleClickBack = () => {
         setOpenModal(false)
     }
 
     const handleClickConfirm = () => {
+        // Update BE
         confirmReminder(currentUser.uid.toString(), reminder.medicationId, reminder.id)
+
+        // Update FE
+        let medicationDocument = medications.find( item => item.id == reminder.medicationId)
+        medicationDocument.pillsInStock -= quantity
+
+        let reminderIdx = medicationDocument.reminders.findIndex(item => item.id == reminder.id)
+        let reminderDoc = medicationDocument.reminders[reminderIdx]
+        medicationDocument.reminders[reminderIdx] = {
+          ...reminderDoc,
+          isConfirmed: true
+        }
+
+        setMedications(prev => [...medications.filter(item => item.id != reminder.medicationId), {...medicationDocument} ])
+
         setOpenModal(false)
-
-        let clickedReminder = reminders.find(item => item.id == reminder.id)
-        clickedReminder.isConfirmed = true
-
-        let newReminders = [...reminders.filter(item => item.id != reminder.id), clickedReminder]
-        newReminders = newReminders.sort( (a, b) => (a.timestamp - b.timestamp) )
-
-        setReminders(newReminders)
-        // setReminders(prev => [
-        //   ...prev.filter(item => item.id != reminder.id), clickedReminder
-        // ])
-        // setRefresh()
     }
 
     const handleClickUnconfirm = () => {
+        // Update BE
         unconfirmReminder(currentUser.uid.toString(), reminder.medicationId, reminder.id)
+
+
+        // Update FE
+        let medicationDocument = medications.find( item => item.id == reminder.medicationId)
+        medicationDocument.pillsInStock += quantity
+
+        let reminderIdx = medicationDocument.reminders.findIndex(item => item.id == reminder.id)
+        let reminderDoc = medicationDocument.reminders[reminderIdx]
+        medicationDocument.reminders[reminderIdx] = {
+          ...reminderDoc,
+          isConfirmed: false
+        }
+
+        setMedications(prev => [...medications.filter(item => item.id != reminder.medicationId), {...medicationDocument} ])
+        
         setOpenModal(false)
-
-        let clickedReminder = reminders.find(item => item.id == reminder.id)
-        clickedReminder.isConfirmed = false
-
-        let newReminders = [...reminders.filter(item => item.id != reminder.id), clickedReminder]
-        newReminders = newReminders.sort( (a, b) => (a.timestamp - b.timestamp) )
-
-        setReminders(newReminders)
-
-        // setRefresh()
     }
 
     const handleClickReschedule = () => {
@@ -102,13 +111,19 @@ export default function MedicationItem({navigation, reminders, setReminders, set
 
       rescheduleReminder(currentUser.uid, medicationId, reminderId, newDay)
 
-      let clickedReminder = reminders.find(item => item.id == reminder.id)
-      clickedReminder.timestamp = newDay
+      const sort = true
+      updateReminder(medications, setMedications, reminder.medicationId, reminder.id, {
+        timestamp: newDay
+      }, sort)
 
-      let newReminders = [...reminders.filter(item => item.id != reminder.id), clickedReminder]
-      newReminders = newReminders.sort( (a, b) => (a.timestamp - b.timestamp) )
+      // let clickedReminder = reminders.find(item => item.id == reminder.id)
+      // clickedReminder.timestamp = newDay
 
-      setReminders(newReminders)
+      // let newReminders = [...reminders.filter(item => item.id != reminder.id), clickedReminder]
+      // newReminders = newReminders.sort( (a, b) => (a.timestamp - b.timestamp) )
+
+      // setReminders(newReminders)
+
       setIsReschedulingTime(false)
       
       // setRefresh()
@@ -118,14 +133,16 @@ export default function MedicationItem({navigation, reminders, setReminders, set
       deleteReminder(currentUser.uid, medicationId, reminderId)
       setOpenModal(false)
 
+      removeReminder(medications, setMedications, reminder.medicationId, reminder.id)
 
-      setRefresh()
+      // setRefresh()
     }
 
     const [isEditing, setIsEditing] = useState(false)
 
     const handleClickEditReminder = () => {
-      setIsEditing(true)
+      console.log('Clicked');
+      setIsEditing(prev => !prev)
     }
 
     const handleClickCheckInformation = () => {
@@ -149,7 +166,7 @@ export default function MedicationItem({navigation, reminders, setReminders, set
                         <View style={styles.textContainer}>
                             <Text style={styles.text}>{medicationName}</Text>
                             <Text>Take {quantity}</Text>
-                            <Text>{note}</Text>
+                            {note && note.length > 0 ? <Text>{note}</Text> : <></>}
                         </View>
 
                         { reminder.isConfirmed ? <MaterialIcons name='check-circle' color='green' size={22}/> : <></>}
@@ -163,13 +180,17 @@ export default function MedicationItem({navigation, reminders, setReminders, set
 							animationType='fade'
 							transparent={true}
 						>
+              <TouchableWithoutFeedback onPress={() => setOpenModal(false)}>
 							<View style={styles.modal}>
-                <Feather onPress={() => setOpenModal(false)} style={{position: 'absolute', top: 10, left: 10}} name='x' color='white' size={28}/>
+                {/* <Feather onPress={() => setOpenModal(false)} style={{position: 'absolute', top: 30, left: 20}} name='x' color='white' size={28}/> */}
 								<View style={styles.modalContainer}>
                   <View style={styles.header}>
-                    <MaterialCommunityIcons onPress={handleClickDeleteReminder} name='trash-can-outline' size={20}/>
-                    <MaterialCommunityIcons onPress={handleClickCheckInformation} name='information-outline' size={20}/>
-                    <MaterialCommunityIcons onPress={handleClickEditReminder} name='pencil-outline' size={20}/>
+                    <Feather onPress={() => setOpenModal(false)} name='x' color='black' size={28}/>
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between', width: 100}}>
+                      <MaterialCommunityIcons onPress={handleClickCheckInformation} name='information-outline' size={20}/>
+                      <MaterialCommunityIcons onPress={handleClickEditReminder} name='pencil-outline' size={20}/>
+                      <MaterialCommunityIcons onPress={handleClickDeleteReminder} name='trash-can-outline' size={20}/>
+                    </View>
                   </View>
 
 									<View style={styles.modalHeader}>
@@ -228,6 +249,7 @@ export default function MedicationItem({navigation, reminders, setReminders, set
 
 								</View>
 							</View>
+              </TouchableWithoutFeedback>
 						</Modal>
 
             <Modal
@@ -237,7 +259,7 @@ export default function MedicationItem({navigation, reminders, setReminders, set
               <EditReminder
                 setIsEditing={setIsEditing}
                 reminder={reminder}
-                setRefresh={setRefresh}
+                // setRefresh={setRefresh}
               />
             </Modal>
 

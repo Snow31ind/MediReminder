@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, View, TextInput, TouchableWithoutFeedback, Button, Text, TouchableOpacity, ScrollView, FlatList, Modal } from "react-native";
+import { StyleSheet, View, TextInput, TouchableWithoutFeedback, Button, Text, TouchableOpacity, ScrollView, FlatList, Modal, SafeAreaView } from "react-native";
 import { Keyboard } from "react-native";
 import {MaterialIcons} from '@expo/vector-icons';
 import {Picker} from '@react-native-picker/picker'
@@ -26,7 +26,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
   const [doses, setDoses] = useState(0);
   const [interval, setInterval] = useState(1);
 
-  const { currentUser } = useAuth() 
+  const { currentUser, medications, setMedications } = useAuth() 
 
 
   const dateInWeek = ['Monday', 'Tuesday', 'Wesnesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -101,7 +101,8 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
             const newReminder = {
               hour: 8,
               minute: 0,
-              quantity: 1
+              quantity: 1,
+              note: ''
             }
 
             setReminders( prevReminders => [...prevReminders, newReminder])
@@ -184,7 +185,8 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
     }
 
     const handleClickWriteNote = (text) => {
-      setTime( prevTime => ({...prevTime, note: text}))
+      setNote(text)
+      setTime( prevTime => ({...prevTime, note: note}))
     }
 
     const handleClickDone = () => {
@@ -267,7 +269,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
                       textAlignVertical='top'
                       multiline={true}
                       numberOfLines={5}
-                      onChangeText={text => handleClickWriteNote(text)}
+                      onChangeText={handleClickWriteNote}
                     />
                   </View>
                 </View>
@@ -320,13 +322,13 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
   const handleClickDoneAddMedication = async () => {
 
     // console.log('Medication details:',medication);
-    const medication = {
-      name: name,
-      pillsInStock: pillsInStock,
-      startDate: startDate,
-      endDate: endDate ? endDate : null,
-      refill: refill
-    }
+    // const medication = {
+    //   name: name,
+    //   pillsInStock: pillsInStock,
+    //   startDate: startDate,
+    //   endDate: endDate ? endDate : null,
+    //   refill: refill
+    // }
     // console.log(medication);
     // console.log('Plans details:', reminders);
     // console.log('Medication plan:', setUpReminders(startDate, endDate));
@@ -334,30 +336,42 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
     const createMedicationPlan = async () => {
       const userMedicationsRef = collection(db, 'users', currentUser.uid.toString(), 'medications')
 
+      const medicationDocument = {
+        createdAt: serverTimestamp(),
+        name: name,
+        pillsInStock: parseInt(pillsInStock),
+        startDate: Timestamp.fromDate(startDate),
+        endDate: endDate ? Timestamp.fromDate(endDate) : null,
+        refill: refill,
+        updatedAt: serverTimestamp()
+      }
+
       try {
-        await addDoc(userMedicationsRef, {
-          createdAt: serverTimestamp(),
-          name: name,
-          pillsInStock: parseInt(pillsInStock),
-          startDate: Timestamp.fromDate(startDate),
-          endDate: endDate ? Timestamp.fromDate(endDate) : null,
-          refill: refill,
-          updatedAt: serverTimestamp()
-        }).then( doc => {
+        await addDoc(userMedicationsRef, medicationDocument).then( medicationDoc => {
           // console.log(doc.id.toString());
-          const userMedicationRemindersRef = collection(db, 'users', currentUser.uid.toString(), 'medications', doc.id.toString(), 'reminders')
+          // setMedications(prevMedications => [...prevMedications, {...medicationDoc, id: medicationDoc.id, reminders: []}])
+
+          const userMedicationRemindersRef = collection(db, 'users', currentUser.uid.toString(), 'medications', medicationDoc.id.toString(), 'reminders')
           
           const createMedicationReminders = async () => {
             const plans = setUpReminders(startDate, endDate)
+            let array = []
 
             for(let plan of plans) {
-              await addDoc(userMedicationRemindersRef, {
+              console.log('Plan:', plan);
+              const reminderDocument = {
                 ...plan,
                 timestamp: Timestamp.fromDate(plan.timestamp),
                 updatedAt: Timestamp.fromDate(plan.updatedAt)
+              }
+              console.log('ReminderDocument:', reminderDocument);
 
-              })
+              await addDoc(userMedicationRemindersRef, reminderDocument).then(reminderDoc => {
+                array.push({...plan, timestamp: plan.timestamp, updatedAt: plan.updatedAt, id: reminderDoc.id})
+              }).catch(e => console.log('Error in adding reminders to a medication:', e.message))
             }
+
+            setMedications(prevMedications => [...prevMedications, {...medicationDocument, startDate: startDate, endDate: endDate ? endDate : null, updatedAt: new Date(),  id: medicationDoc.id, reminders: array}])
           }
           
           createMedicationReminders()
@@ -368,7 +382,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
       }
     }
       createMedicationPlan()
-      setRefresh()
+      // setRefresh()
       setOpenAddMedication(false)
   }
 
@@ -441,6 +455,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
 
   return (
     <>
+    <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
           <View style={styles.headerBar}>
             <TouchableOpacity onPress={() => setOpenAddMedication(false)} style={{flexDirection: 'row'}}>
@@ -450,8 +465,8 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
             </TouchableOpacity>
 
             <Text>Add Medicine</Text>
-            <TouchableOpacity onPress={() => setPage('Frequency')} style={{flexDirection: 'row'}}>
-              <Text>Next</Text>
+            <TouchableOpacity onPress={name.length > 0 ? () => setPage('Frequency') : () => {}} style={{flexDirection: 'row'}}>
+              <Text style={{color: name.length > 0 ? 'black' : 'gray'}}>Next</Text>
             </TouchableOpacity>
           </View>
 
@@ -472,12 +487,14 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
             </View>
           </View>
       </ScrollView>
+      </SafeAreaView>
 
       {/* Frequency Modal */}
       <Modal
         visible={page == 'Frequency' ? true : false}
         animationType='slide'
       >
+        <SafeAreaView style={{flex: 1}}>
         <ScrollView style={styles.container}>
             <View style={styles.headerBar}>
               <TouchableOpacity onPress={() => setPage('Info')} style={{flexDirection: 'row'}}>
@@ -595,6 +612,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
 
             </View>
         </ScrollView>
+        </SafeAreaView>
       </Modal>
 
       {/* Stock modal */}
@@ -602,6 +620,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
         visible={page == 'Stock' ? true : false}
         animationType='slide'
       >
+      <SafeAreaView style={{flex: 1}}>
         <ScrollView style={styles.container}>
             <View style={styles.headerBar}>
               <TouchableOpacity onPress={() => setPage('Frequency')} style={{flexDirection: 'row'}}>
@@ -611,8 +630,8 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
               </TouchableOpacity>
 
               <Text>More Details</Text>
-              <TouchableOpacity onPress={handleClickDoneAddMedication} style={{flexDirection: 'row'}}>
-                <Text>Done</Text>
+              <TouchableOpacity onPress={pillsInStock.length > 0 && parseInt(pillsInStock) > 0 ? handleClickDoneAddMedication : () => {}} style={{flexDirection: 'row'}}>
+                <Text style={{color: pillsInStock.length > 0 && parseInt(pillsInStock) > 0 ? 'black' : 'gray'}}>Done</Text>
                 {/* <MaterialIcons name='arrow-forward' size={20}/> */}
               </TouchableOpacity>
             </View>
@@ -647,6 +666,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
 
             </View>
         </ScrollView>
+      </SafeAreaView>
       </Modal>
 
     </>

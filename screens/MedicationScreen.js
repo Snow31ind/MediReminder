@@ -16,37 +16,37 @@ import MedicationModal from '../components/MedicationModal'
 
 
 export default function MedicationScreen({navigation}) {
-  const { currentUser } = useAuth()
+  const { currentUser, medications, setMedications } = useAuth()
 
-  const [medications, setMedications] = useState([])
+  // const [medications, setMedications] = useState([])
 
-  const fetchData = async () => {
-    setMedications([])
+  // const fetchData = async () => {
+  //   setMedications([])
 
-    const medicationsRef = collection(db, 'users', currentUser.uid, 'medications')
-    const medicationsDocs = await getDocs(medicationsRef)
+  //   const medicationsRef = collection(db, 'users', currentUser.uid, 'medications')
+  //   const medicationsDocs = await getDocs(medicationsRef)
       
-    medicationsDocs.docs.map( (medication) => {
-      const getReminders = async () => {
-        const remindersRef = query(collection(db, 'users', currentUser.uid, 'medications', medication.id, 'reminders'), orderBy('timestamp'))
-        const remindersDocs = await getDocs(remindersRef)
+  //   medicationsDocs.docs.map( (medication) => {
+  //     const getReminders = async () => {
+  //       const remindersRef = query(collection(db, 'users', currentUser.uid, 'medications', medication.id, 'reminders'), orderBy('timestamp'))
+  //       const remindersDocs = await getDocs(remindersRef)
         
-        return {...medication.data(), id: medication.id, reminders: remindersDocs.docs.map(reminder => ({...reminder.data(), id: reminder.id, timestamp: reminder.data().timestamp.toDate()}))}
-      }
+  //       return {...medication.data(), id: medication.id, reminders: remindersDocs.docs.map(reminder => ({...reminder.data(), id: reminder.id, timestamp: reminder.data().timestamp.toDate()}))}
+  //     }
 
-      getReminders()
-      .then( medication => {
-        setMedications(prev => [...prev, medication])
-      }).catch(e => console.log(e))
-      })
+  //     getReminders()
+  //     .then( medication => {
+  //       setMedications(prev => [...prev, medication])
+  //     }).catch(e => console.log(e))
+  //     })
 
-  }
+  // }
 
-  useEffect(
-    () => {
-      fetchData()
-    }
-  , [])
+  // useEffect(
+  //   () => {
+  //     fetchData()
+  //   }
+  // , [])
 
   return (
     <View style={{flex: 1}}>
@@ -91,10 +91,11 @@ export default function MedicationScreen({navigation}) {
             <View style={styles.medicationContent}>
               <View style={styles.medicationInf}>
                 <Text style={styles.medicationName}>{name}</Text>
-                <Text>Next: {nextReminder.timestamp.toDateString()} {toTimeString(nextReminder.timestamp)}</Text>
+                { nextReminder ? <Text>Next: {nextReminder.timestamp.toDateString()} {toTimeString(nextReminder.timestamp)}</Text> : <Text>Completed</Text>}
+                {/* <Text>Next: {nextReminder.timestamp.toDateString()} {toTimeString(nextReminder.timestamp)}</Text> */}
                 {/* <Text>{nextReminder.toLocaleString()}</Text> */}
                 {/* <Text>{nextReminder.id}</Text> */}
-                <Text>{pillsInStock} pills left</Text>
+                <Text>{medication.pillsInStock} pills left</Text>
               </View>
   
               <MaterialIcons name='arrow-right' size={20}/>

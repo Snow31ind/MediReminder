@@ -20,7 +20,7 @@ export function AuthProvider({children}) {
 
     const [error, setError] = useState()
 
-    // const [medications, setMedications] = useState([])
+    const [medications, setMedications] = useState([])
 
     // useEffect(
     //   () => {
@@ -48,27 +48,27 @@ export function AuthProvider({children}) {
   
     // }
 
-    // const fetchData = async (user) => {
-    //   setMedications(prev => [])
+    const fetchData = async (user) => {
+      setMedications(prev => [])
   
-    //   const medicationsRef = collection(db, 'users', user.uid, 'medications')
-    //   const medicationsDocs = await getDocs(medicationsRef)
+      const medicationsRef = collection(db, 'users', user.uid, 'medications')
+      const medicationsDocs = await getDocs(medicationsRef)
         
-    //   medicationsDocs.docs.map( (medication) => {
-    //     const getReminders = async () => {
-    //       const remindersRef = query(collection(db, 'users', user.uid, 'medications', medication.id, 'reminders'), orderBy('timestamp'))
-    //       const remindersDocs = await getDocs(remindersRef)
+      medicationsDocs.docs.map( (medication) => {
+        const getReminders = async () => {
+          const remindersRef = query(collection(db, 'users', user.uid, 'medications', medication.id, 'reminders'), orderBy('timestamp'))
+          const remindersDocs = await getDocs(remindersRef)
           
-    //       return {...medication.data(), id: medication.id, reminders: remindersDocs.docs.map(reminder => ({...reminder.data(), id: reminder.id, timestamp: reminder.data().timestamp.toDate()}))}
-    //     }
+          return {...medication.data(), id: medication.id, reminders: remindersDocs.docs.map(reminder => ({...reminder.data(), id: reminder.id, timestamp: reminder.data().timestamp.toDate()}))}
+        }
         
-    //     getReminders()
-    //     .then( medication => {
-    //       setMedications(prev => [...prev, medication])
-    //     }).catch(e => console.log(e))
-    //     })
+        getReminders()
+        .then( medication => {
+          setMedications(prev => [...prev, medication])
+        }).catch(e => console.log(e))
+        })
   
-    // }
+    }
 
     async function login(email, password) {
         // setError()
@@ -78,7 +78,7 @@ export function AuthProvider({children}) {
           const userInf = userCredentials.user;
           console.log('Login then runs');
             // setCurrentUser(userInf)
-            // fetchData(userInf)
+            fetchData(userInf)
             // console.log('Signup runs');
         })
         .catch(error => {
@@ -160,6 +160,12 @@ export function AuthProvider({children}) {
         } catch (e) {
           console.log('Error in auth state changed:', e.message);
         }
+
+        return () => {
+          setInfo()
+          setCurrentUser(),
+          setMedications()
+        }
     }, [])
 
 
@@ -169,13 +175,13 @@ export function AuthProvider({children}) {
         userDoc,
         info,
         error,
-        // medications,
+        medications,
 
         login,
         signup,
         signout,
         setError,
-        // fetchData
+        setMedications
     }
 
     return (

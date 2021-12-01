@@ -10,6 +10,7 @@ import RecordScreen from '../screens/RecordScreen';
 import SettingScreen from '../screens/SettingScreen';
 import LogOutScreen from '../screens/LogOutScreen';
 import MedicationScreen from '../screens/MedicationScreen';
+import QRScannerScreen from '../screens/QRScannerScreen';
 
 const Drawer = createDrawerNavigator();
 
@@ -21,7 +22,8 @@ const AppStack = () => {
                 <Drawer.Screen name='Account' component={AccountScreen} />
                 <Drawer.Screen name='Record' component={RecordScreen} />
                 <Drawer.Screen name='Medication' component={MedicationScreen} />
-                <Drawer.Screen name='Notification' component={NotificationScreen}/>
+                {/* <Drawer.Screen name='Notification' component={NotificationScreen}/> */}
+                <Drawer.Screen name='Scanner' component={QRScannerScreen} />
                 <Drawer.Screen name='Setting' component={SettingScreen} />
             </Drawer.Navigator>
         </NavigationContainer>

@@ -1,13 +1,15 @@
 import React, { useRef, useState } from 'react'
-import { Image, StyleSheet, Text, Touchable, View, TouchableOpacity, TextInput } from 'react-native'
+import { Image, StyleSheet, Text, Touchable, View, TouchableOpacity, TextInput, SafeAreaView } from 'react-native'
 import pill from '../assets/medicationPill.png'
 import {MaterialIcons, Ionicons, MaterialCommunityIcons} from '@expo/vector-icons'
 import {Picker} from '@react-native-picker/picker'
 import { deleteMedication, updateMedication } from '../api/ReminderApi'
 import { useAuth } from '../Context/AuthContext'
-import { toTimeString } from '../shared/Functions'
+import { deleteMedicationFE, toTimeString, updateMedicationFE } from '../shared/Functions'
 
-export default function MedicationModal({medications, setMedications, setOpenModal, medication}) {
+export default function MedicationModal({setOpenModal, medication}) {
+
+
   const lastTaken = medication.reminders.findIndex(reminder => reminder.isConfirmed == true)
   const lastTakenReminder = lastTaken > -1 ?
   toTimeString(medication.reminders[lastTaken].timestamp)
@@ -28,7 +30,7 @@ export default function MedicationModal({medications, setMedications, setOpenMod
   const [refill, setRefill] = useState(medication.refill)
   const [name, setName] = useState(medication.name)
   const refillRef = useRef()
-  const { currentUser } = useAuth()
+  const { currentUser, medications, setMedications } = useAuth()
 
   const openRefillRef = () => {
     refillRef.current.focus()
@@ -46,10 +48,12 @@ export default function MedicationModal({medications, setMedications, setOpenMod
     }
     updateMedication(currentUser.uid.toString(), medication.id, document)
 
-    const pickedMedication = medications.find( item => item.id == medication.id )
-    setMedications(
-      prevMedications => [...prevMedications.filter( item => item.id != medication.id), {...pickedMedication, ...document} ]
-    )
+    // const pickedMedication = medications.find( item => item.id == medication.id )
+    // setMedications(
+    //   prevMedications => [...prevMedications.filter( item => item.id != medication.id), {...pickedMedication, ...document} ]
+    // )
+
+    updateMedicationFE(medications, setMedications, medication.id, document)
     
     setEditing(false)
   }
@@ -59,12 +63,15 @@ export default function MedicationModal({medications, setMedications, setOpenMod
   }
 
   const handleClickDelete = () => {
-    setMedications( medications.filter( item => item.id != medication.id ))
     deleteMedication(currentUser.uid.toString(), medication.id)
+
+    deleteMedicationFE(medications, setMedications, medication.id)
+    
     setOpenModal(false)
   }
 
   return (
+    <SafeAreaView style={{flex: 1}}>
     <View style={styles.container}>
       <View style={styles.headerBar}>
         <MaterialIcons name='arrow-back' size={20} onPress={() => setOpenModal(false)}/>
@@ -148,6 +155,7 @@ export default function MedicationModal({medications, setMedications, setOpenMod
         </TouchableOpacity> */}
       </View>
     </View>
+    </SafeAreaView>
   )
 }
 

@@ -7,8 +7,8 @@ import { Dimensions } from "react-native";
 
 const screenWidth = Dimensions.get("window").width;
 
-export default function HomeScreen({navigation}) {
-
+export default function HomeScreen({navigation, route}) {
+    // const { data } = route.params
     useEffect(
         () => {
             console.log('Home renders');

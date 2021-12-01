@@ -10,7 +10,7 @@ import { GlobalStyles } from "../shared/GlobalStyles";
 
 export default function LoginScreen({navigation}){
     // const { signIn } = useContext(AuthContext);
-    const { login, error, setError } = useAuth();
+    const { login, error, setError, currentUser } = useAuth();
 
     const [secure, setSecure] = useState(true);
     const [email, setEmail] = useState('');
@@ -35,18 +35,24 @@ export default function LoginScreen({navigation}){
     }
 
     useEffect(
-        () => {
-            console.log('Login renders');
-        }
-    , [])
-
-    useEffect(
       () => {
         if (password.length > 0 && password.length < 6) {
           setPasswordError('Your password must be at least 6 characters')
         } else setPasswordError()
+
       }
     , [password])
+
+    useEffect(
+        () => {
+            return () => {
+                setSecure(false)
+                setEmail('')
+                setPassword('')
+                setPasswordError('')
+            }
+        }
+    , [currentUser])
 
     return(   
         <TouchableWithoutFeedback onPress={() => {Keyboard.dismiss()}}>

@@ -1,38 +1,52 @@
 import React, { useState } from 'react'
-import { Image, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Image, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { updatePillsInStock, updateReminder, updateReminderQuantity } from '../api/ReminderApi'
 import pill from '../assets/medicationPill.png'
 import { useAuth } from '../Context/AuthContext'
 import { toTimeString } from '../shared/Functions'
 
-export default function EditReminder({setIsEditing, reminder, setRefresh}) {
-  const { currentUser } = useAuth()
-
-  const handleClickCancel = () => {
-    setIsEditing(false)
-  }
-
-  const handleClickSave = () => {
-    if (parseInt(quantity) != reminder.quantity || note != reminder.note) {
-      const document = {
-        quantity: quantity,
-        note: note
-      }
-
-      updateReminder(currentUser.uid, reminder.medicationId, reminder.id, document)
-      
-      setIsEditing(false)
-      setRefresh()
-    } else setIsEditing(false)
-  }
-
+export default function EditReminder({setIsEditing, reminder}) {
+  const { currentUser, medications, setMedications } = useAuth()
+  
   const medicationName = reminder.name
   const timestamp = reminder.timestamp
 
   const [quantity, setQuantity] = useState(reminder.quantity.toString())
   const [note, setNote] = useState(reminder.note)
 
+  const handleClickCancel = () => {
+    setIsEditing(false)
+  }
+
+  // Done
+  const handleClickSave = () => {
+    if (parseInt(quantity) != reminder.quantity || note != reminder.note) {
+      const document = {
+        quantity: parseInt(quantity),
+        note: note
+      }
+
+      updateReminder(currentUser.uid, reminder.medicationId, reminder.id, document)
+
+      let medicationDocument = medications.find(item => item.id == reminder.medicationId)
+      let reminderIdx = medicationDocument.reminders.findIndex(item => item.id == reminder.id)
+      let reminderDoc = medicationDocument.reminders[reminderIdx]
+      medicationDocument.reminders[reminderIdx] = {
+        ...reminderDoc,
+        ...document
+      }
+
+      console.log(medicationDocument);
+
+      setMedications([...medications.filter(item => item.id != reminder.medicationId), medicationDocument])
+      
+      setIsEditing(false)
+    } else setIsEditing(false)
+  }
+
+
   return (
+    <SafeAreaView style={{flex: 1}}>
     <View style={styles.container}>
       <View style={styles.header}>
         <Text onPress={handleClickCancel}>Cancel</Text>
@@ -78,6 +92,7 @@ export default function EditReminder({setIsEditing, reminder, setRefresh}) {
           </View>
         </View>
     </View>
+    </SafeAreaView>
   )
 }
 
