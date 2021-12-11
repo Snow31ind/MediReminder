@@ -15,16 +15,19 @@ import { setStatusBarHidden } from "expo-status-bar";
 import { useUser } from "../Context/UserContext";
 import { useAuth } from "../Context/AuthContext";
 import { db } from "../firebase/Config";
+import { log } from "react-native-reanimated";
 
 export default function MedicationForm({setRefresh, setOpenAddMedication ,addMedicationReminder, newMedication, newDate, setNewMedication, setNewDate, newTime, setNewTime}){
   // daily, specific, interval
 
   const pages = ['Info', 'Frequency', 'Stock']
   const [page, setPage] = useState(pages[0])
+  const [errorMessage, setErrorMessage] = useState()
   
   const [reminderType, setReminderType] = useState('daily');
   const [doses, setDoses] = useState(0);
   const [interval, setInterval] = useState(1);
+  const [minPillsInStock, setMinPillsInStock] = useState(1)
 
   const { currentUser, medications, setMedications } = useAuth() 
 
@@ -75,8 +78,6 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
 
   const [frequency, setFrequency] = useState('Daily')
   const [times, setTimes] = useState(1)
-
-
 
   const frequencyRef = useRef()
   const timeRef = useRef()
@@ -298,9 +299,14 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
   };
 
   const handleConfirmStartDate = (day) => {
-    setStartDate(day)
-    setStartDatePickerVisibility(false);
+    setErrorMessage()
 
+    if (day < new Date()) {
+      setErrorMessage('Your medication should be scheduled from today.')
+      setStartDate(new Date())
+    } else setStartDate(day)
+
+    setStartDatePickerVisibility(false);
   };
 
   const showEndDatePicker = () => {
@@ -313,7 +319,12 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
   };
 
   const handleConfirmEndDate = (day) => {
-    setEndDate(day)
+    setErrorMessage()
+
+    if (day <= startDate) {
+      setErrorMessage('Your medication should be ended after the start day.')
+    } else setEndDate(day)
+    
     setEndDatePickerVisibility(false);
 
   };
@@ -439,8 +450,22 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
     setOpenToggleSwitch(prev => !prev)
   }
 
+  const handleCheckPillsInStock = (text) => {
+
+    setErrorMessage()
+    
+    let minAmount = 0
+    reminders.forEach( item => minAmount += item.quantity)
+
+    if (text == '' ||  parseInt(text) < minAmount) {
+      setErrorMessage(`You should have at least ${minAmount} pills`)
+    } else {
+      setPillsInStock(prev => text)
+    }
+  }
+
   const [name, setName] = useState('')
-  const [pillsInStock, setPillsInStock] = useState('')
+  const [pillsInStock, setPillsInStock] = useState('0')
   const [refill, setRefill] = useState(true)
   const [startDate, setStartDate] = useState(new Date())
   const [endDate, setEndDate] = useState(null)
@@ -455,6 +480,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
 
   return (
     <>
+    {/* Med Info */}
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
           <View style={styles.headerBar}>
@@ -487,9 +513,9 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
             </View>
           </View>
       </ScrollView>
-      </SafeAreaView>
+    </SafeAreaView>
 
-      {/* Frequency Modal */}
+      {/* Frequency*/}
       <Modal
         visible={page == 'Frequency' ? true : false}
         animationType='slide'
@@ -611,6 +637,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
               </View>
 
             </View>
+            {errorMessage && <Text style={{alignSelf: 'center', color: 'tomato', fontSize: 12}}>{errorMessage}</Text>}
         </ScrollView>
         </SafeAreaView>
       </Modal>
@@ -630,8 +657,8 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
               </TouchableOpacity>
 
               <Text>More Details</Text>
-              <TouchableOpacity onPress={pillsInStock.length > 0 && parseInt(pillsInStock) > 0 ? handleClickDoneAddMedication : () => {}} style={{flexDirection: 'row'}}>
-                <Text style={{color: pillsInStock.length > 0 && parseInt(pillsInStock) > 0 ? 'black' : 'gray'}}>Done</Text>
+              <TouchableOpacity onPress={errorMessage ? handleClickDoneAddMedication : () => {}} style={{flexDirection: 'row'}}>
+                <Text style={{color: errorMessage ? 'gray' : 'black'}}>Done</Text>
                 {/* <MaterialIcons name='arrow-forward' size={20}/> */}
               </TouchableOpacity>
             </View>
@@ -642,11 +669,12 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
                 <View style={styles.button}>
                   <Text>Pills in stock</Text>
                   <TextInput
-                    defaultValue={pillsInStock}
+                    // defaultValue={'0'}
                     textAlign='right'
-                    onChangeText={text => setPillsInStock(text)}
-                    placeholder='pills in stock'
+                    onChangeText={handleCheckPillsInStock}
+                    placeholder='0'
                     keyboardType='numeric'
+                    // onChange={handleCheckPillsInStock}
                   />
                 </View>
             </View>
@@ -665,6 +693,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
             </View>
 
             </View>
+            {errorMessage && <Text style={{alignSelf: 'center', color: 'tomato', fontSize: 12}}>{errorMessage}</Text>}
         </ScrollView>
       </SafeAreaView>
       </Modal>

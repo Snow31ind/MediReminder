@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { StyleSheet, Text, TextInput, View, TouchableOpacity, Button, TouchableWithoutFeedback, Keyboard, FlatList, Modal, Alert, ActivityIndicator } from "react-native";
 import CalendarStrip from 'react-native-calendar-strip';
-import {MaterialIcons} from '@expo/vector-icons'
+import {MaterialIcons, MaterialCommunityIcons} from '@expo/vector-icons'
 import MedicationItem from "./MedicationItem";
 import { collection, doc, getDoc, getDocs, onSnapshot, orderBy, query } from "@firebase/firestore";
 import { db } from "../firebase/Config";
@@ -9,6 +9,7 @@ import { log, set } from "react-native-reanimated";
 import { AuthContext, useAuth } from "../Context/AuthContext";
 import { Divider } from "react-native-elements/dist/divider/Divider";
 import MedicationForm from "./MedicationForm";
+import QRScannerScreen from "../screens/QRScannerScreen";
 export default function Calendar({navigation}){
     const [newDate, setNewDate] = useState(''); 
     const [newMedication, setNewMedication] = useState('');
@@ -16,6 +17,8 @@ export default function Calendar({navigation}){
     const [loading, setLoading] = useState(true)
 
     const [openAddMedication, setOpenAddMedication] = useState(false);
+    const [openQRCodeScanner, setOpenQRCodeScanner] = useState(false)
+    const [openTransititon, setOpenTransition] = useState(false)
     const [currentDate, setCurrentDate] = useState(new Date())
     const [haveRemindersToday, setHaveRemindersToday] = useState(false)
 
@@ -27,99 +30,6 @@ export default function Calendar({navigation}){
         setTimeout(() => setLoading(false), 500)
       }
     , [])
-    
-    // const doEffect = async () => {
-    //     setReminders(prev => [])
-    //     setLoading(true)
-        
-    //     // Error: Have not sorted the array of reminders by timestamp
-    //     // const getReminders = async () => {
-    //       const userMedicationsRef = collection(db, 'users', currentUser.uid.toString(), 'medications')
-    //       const userMedications = await getDocs(userMedicationsRef)
-    //       var res = []
-
-    //       for(let i = 0; i < userMedications.docs.length; i++) {
-    //         let medication = userMedications.docs[i]
-
-    //         const medicationRemindersRef = collection(db, 'users', currentUser.uid.toString(), 'medications', medication.id.toString(), 'reminders')
-    //         const medicationRemindersDocs = await getDocs(medicationRemindersRef)
-            
-
-    //         let medicationReminders = medicationRemindersDocs.docs.map(
-    //           reminder => ({
-    //             ...medication.data(),
-    //             medicationId: medication.id,
-    //             ...reminder.data(),
-    //             id: reminder.id,
-    //             timestamp: reminder.data().timestamp.toDate()
-    //           })
-    //         )
-
-    //         res = res.concat(medicationReminders)
-    //       }
-
-    //       res = res.sort( (a, b) => (a.timestamp - b.timestamp) )
-    //       setReminders([...res])
-          
-    //       // console.log(res);
-    //     setLoading(false)
-    // }
-
-    // const doEffect1 = async () => {
-    //   // setReminders(prev => [])
-    //   setLoading(true)
-    //   // Error: Have not sorted the array of reminders by timestamp
-    //   const getReminders = async () => {
-    //     const userMedicationsRef = collection(db, 'users', currentUser.uid.toString(), 'medications')
-    //     const userMedications = await getDocs(userMedicationsRef)
-
-
-    //     for(let i = 0; i < userMedications.docs.length; i++) {
-    //       let medication = userMedications.docs[i]
-
-    //       // If there's any new medication plan, it will be added to reminders hook
-    //       if (reminders.find(reminder => reminder.medicationId == medication.id) == null) {
-    //         console.log('Medication with id = ', medication.id, 'is added.');
-    //         const medicationRemindersRef = collection(db, 'users', currentUser.uid.toString(), 'medications', medication.id.toString(), 'reminders')
-    //         const medicationRemindersDocs = await getDocs(medicationRemindersRef)
-
-    //         for(let j = 0; j < medicationRemindersDocs.size; ++j) {
-    //           let reminder = medicationRemindersDocs.docs[j]
-
-    //           setReminders(prev => [...prev, {
-    //             medicationId: medication.id,
-    //             name: medication.data().name,
-    //             ...reminder.data(),
-    //             id: reminder.id,
-    //             timestamp: reminder.data().timestamp.toDate()
-    //           }])
-    //         }
-            
-  
-    //         // let medicationReminders = medicationRemindersDocs.docs.map(
-    //         //   reminder => ({
-    //         //     medicationId: medication.id,
-    //         //     name: medication.data().name,
-    //         //     ...reminder.data(),
-    //         //     id: reminder.id,
-    //         //     timestamp: reminder.data().timestamp.toDate()
-    //         //   })
-    //         // )
-    //         // setReminders(prev => [...prev, ...medicationReminders])
-    //       }
-    //     }
-    //   }
-      
-    //   await getReminders()
-    //   setLoading(false)
-    // }
-
-
-    // useEffect(
-    //   () => {
-    //     doEffect()
-    //   }
-    // , [])
 
     const daysHavingReminders = medications
     .map( medication => medication.reminders )
@@ -142,14 +52,14 @@ export default function Calendar({navigation}){
 
 
     const isHavingRemindersToday = () => {
-      // for(var i = 0; i < medications.length; ++i) {
-      //   for(var j = 0; j < medications[i].reminders.length; ++j) {
-      //     if (medications[i].reminders[j].timestamp.toLocaleDateString() == currentDate.toLocaleDateString()) return true
-      //   }
-      // }
-
       return daysHavingReminders.includes(currentDate.toLocaleDateString())
     }
+
+    const handleClickOpenAddMedication = () => {
+      setOpenTransition(true)
+    }
+
+    const [input, setInput] = useState()
 
     if (loading)
     return (
@@ -246,20 +156,17 @@ export default function Calendar({navigation}){
               color='white'
               name='add-circle'
               size={48}
-              onPress={() => setOpenAddMedication(true)}
+              onPress={handleClickOpenAddMedication}
             />
           </View>
         </View>
-
+        
+        {/* Manual input form */}
         <Modal
           animationType='slide'
           visible={openAddMedication}
-          onRequestClose={() => {
-            Alert.alert('Form has been closed');
-          }}
         >
-          <MedicationForm
-            // setRefresh={doEffect}
+            <MedicationForm
             newDate = {newDate}
             newMedication={newMedication}
             setNewDate={setNewDate}
@@ -267,7 +174,58 @@ export default function Calendar({navigation}){
             setOpenAddMedication={setOpenAddMedication}
             newTime={newTime}
             setNewTime={setNewTime}
+            />
+        </Modal>
+        
+        {/* Scan QR code */}
+        <Modal
+          animationType='slide'
+          visible={openQRCodeScanner}
+        >
+          <QRScannerScreen
+            setOpenQRCodeScanner={setOpenQRCodeScanner}
           />
+        </Modal>
+
+        {/* Selection from */}
+        <Modal
+          animationType='fade'
+          visible={openTransititon}
+          transparent={true}
+        >
+          <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(52, 52, 52, 0.8)'}}>
+            <View style={styles.transitionContainer}>
+              <View style={{backgroundColor: '#53cbff', alignItems: 'center', justifyContent: 'center', padding: 10, borderTopLeftRadius: 10, borderTopRightRadius: 10}}>
+                <Text>New Medication</Text>
+              </View>
+
+              <View style={{flexDirection: 'row', padding: 10}}>
+                <TouchableOpacity style={[styles.transitionButton, {borderRightWidth: 1}]} onPress={() => setOpenAddMedication(true)}>
+                <MaterialCommunityIcons name='form-select' size={36}/>
+                  <Text>Manual</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.transitionButton} onPress={() => setOpenQRCodeScanner(true)}>
+                  <MaterialCommunityIcons name='qrcode-scan' size={36}/>
+                  <Text>QR Code</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity style={{backgroundColor: '#53cbff', alignItems: 'center', justifyContent: 'center', padding: 10, borderBottomRightRadius: 10, borderBottomLeftRadius: 10}} onPress={() => setOpenTransition(false)}>
+                <Text>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* <MedicationForm
+            newDate = {newDate}
+            newMedication={newMedication}
+            setNewDate={setNewDate}
+            setNewMedication={setNewMedication}
+            setOpenAddMedication={setOpenAddMedication}
+            newTime={newTime}
+            setNewTime={setNewTime}
+          /> */}
         </Modal>
         
       </View>
@@ -303,6 +261,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 10,
     // backgroundColor: '#53cbff',
+  },
+  transitionMedication : {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(52, 52, 52, 0.8)',
+  },
+  transitionButton : {
+    // borderWidth: 1,
+    // width: 200,
+    // height: 40
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  transitionContainer : {
+    backgroundColor: 'white',
+    borderRadius: 10
+    // justifyContent: 'center',
+    // alignItems: 'center',
+    // padding: 20
   }
 })
 
