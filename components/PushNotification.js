@@ -101,6 +101,7 @@ export async function schedulePushNotification(h, m, quantity) {
     },
   })
 }
+
 export async function confirmPushNotification() {
   await Notifications.scheduleNotificationAsync({
     content: {

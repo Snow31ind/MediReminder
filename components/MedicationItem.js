@@ -123,11 +123,11 @@ export default function MedicationItem({navigation, reminders, setReminders, rem
     const [isEditing, setIsEditing] = useState(false)
 
     const handleClickEditReminder = () => {
-      console.log('Clicked');
-      setIsEditing(prev => !prev)
+      setIsEditing(true)
     }
 
     const handleClickCheckInformation = () => {
+      setOpenModal(false)
       navigation.navigate('Medication')
     }
 
@@ -235,6 +235,7 @@ export default function MedicationItem({navigation, reminders, setReminders, rem
 						</Modal>
 
             <Modal
+              presentationStyle='fullScreen'
               visible={isEditing}
               animationType='slide'
             >

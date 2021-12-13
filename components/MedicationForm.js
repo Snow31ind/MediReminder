@@ -395,12 +395,15 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
     }
       createMedicationPlan()
       // setRefresh()
-      setOpenAddMedication(false)
+
       confirmPushNotification()
       for (let reminder of reminders)
       {
         schedulePushNotification(parseInt(reminder.hour), parseInt(reminder.minute), parseInt(pillsInStock))
       }
+
+      setOpenAddMedication(false)
+
   }
 
   const setUpReminders = (startDate, endDate) => {
@@ -483,7 +486,9 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
       note: ''
     }
     ])
+
   Scheduling()
+
   return (
     <>
     {/* Med Info */}
@@ -663,7 +668,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
               </TouchableOpacity>
 
               <Text>More Details</Text>
-              <TouchableOpacity onPress={errorMessage ? handleClickDoneAddMedication : () => {}} style={{flexDirection: 'row'}}>
+              <TouchableOpacity onPress={!errorMessage ? handleClickDoneAddMedication : () => {}} style={{flexDirection: 'row'}}>
                 <Text style={{color: errorMessage ? 'gray' : 'black'}}>Done</Text>
                 {/* <MaterialIcons name='arrow-forward' size={20}/> */}
               </TouchableOpacity>

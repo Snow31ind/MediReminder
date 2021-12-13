@@ -47,51 +47,51 @@ export default function EditReminder({setIsEditing, reminder}) {
 
   return (
     <SafeAreaView style={{flex: 1}}>
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text onPress={handleClickCancel}>Cancel</Text>
-        <Text>Edit Reminder</Text>
-        <Text onPress={handleClickSave}>Save</Text>
-      </View>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text onPress={handleClickCancel}>Cancel</Text>
+          <Text>Edit Reminder</Text>
+          <Text onPress={handleClickSave}>Save</Text>
+        </View>
 
-        <View style={{flexDirection: 'row', borderBottomWidth: 1, padding: 10}}>
-          <Image source={pill} style={{height: 80, width: 80}}/>
+          <View style={{flexDirection: 'row', borderBottomWidth: 1, padding: 10}}>
+            <Image source={pill} style={{height: 80, width: 80}}/>
 
-          <View style={styles.reminder}>
-            <Text style={styles.name}>{medicationName}</Text>
-            <Text>Scheduled for {toTimeString(timestamp)}, {timestamp.toDateString()}</Text>
+            <View style={styles.reminder}>
+              <Text style={styles.name}>{medicationName}</Text>
+              <Text>Scheduled for {toTimeString(timestamp)}, {timestamp.toDateString()}</Text>
+            </View>
           </View>
-        </View>
 
-        <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 10}}>
-          <Text>Quantity</Text>
-          <TextInput
-            style={{padding: 5}}
-            underlineColorAndroid={'black'}
-            textAlign='center'
-            onChangeText={text => setQuantity(text)}
-            defaultValue={quantity}
-            keyboardType='numeric'
-          />
-        </View>
-
-        <View style={styles.note}>
-          <Text>Notes</Text>
-          <View
-              style={{alignItems: 'flex-start', borderWidth: 1, borderRadius: 10, padding: 10, marginTop: 5}}
-          >
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 10}}>
+            <Text>Quantity</Text>
             <TextInput
-              defaultValue={note}
-              textAlignVertical='top'
-              onChangeText={text => setNote(text)}
-              multiline={true}
-              numberOfLines={5}
-              // underlineColorAndroid='black'
-              placeholder='Write your note here'
+              style={{padding: 5}}
+              underlineColorAndroid={'black'}
+              textAlign='center'
+              onChangeText={text => setQuantity(text)}
+              defaultValue={quantity}
+              keyboardType='numeric'
             />
           </View>
-        </View>
-    </View>
+
+          <View style={styles.note}>
+            <Text>Notes</Text>
+            <View
+                style={{alignItems: 'flex-start', borderWidth: 1, borderRadius: 10, padding: 10, marginTop: 5}}
+            >
+              <TextInput
+                defaultValue={note}
+                textAlignVertical='top'
+                onChangeText={text => setNote(text)}
+                multiline={true}
+                numberOfLines={5}
+                // underlineColorAndroid='black'
+                placeholder='Write your note here'
+              />
+            </View>
+          </View>
+      </View>
     </SafeAreaView>
   )
 }

@@ -16,8 +16,9 @@ export default function Calendar({navigation}){
     const [newTime, setNewTime] = useState('');
     const [loading, setLoading] = useState(true)
 
-    const [openAddMedication, setOpenAddMedication] = useState(false);
+    const [openAddMedication, setOpenAddMedication] = useState(false)
     const [openQRCodeScanner, setOpenQRCodeScanner] = useState(false)
+
     const [openTransititon, setOpenTransition] = useState(false)
     const [currentDate, setCurrentDate] = useState(new Date())
     const [haveRemindersToday, setHaveRemindersToday] = useState(false)
@@ -57,6 +58,17 @@ export default function Calendar({navigation}){
 
     const handleClickOpenAddMedication = () => {
       setOpenTransition(true)
+    }
+
+    const handleClickOpenMedicationForm = () => {
+      setOpenAddMedication(true)
+      setOpenTransition(false)
+    }
+
+    
+    const handleClickOpenQRCodeScanner = () => {
+      setOpenQRCodeScanner(true)
+      setOpenTransition(false)
     }
 
     const [input, setInput] = useState()
@@ -160,32 +172,6 @@ export default function Calendar({navigation}){
             />
           </View>
         </View>
-        
-        {/* Manual input form */}
-        <Modal
-          animationType='slide'
-          visible={openAddMedication}
-        >
-            <MedicationForm
-            newDate = {newDate}
-            newMedication={newMedication}
-            setNewDate={setNewDate}
-            setNewMedication={setNewMedication}
-            setOpenAddMedication={setOpenAddMedication}
-            newTime={newTime}
-            setNewTime={setNewTime}
-            />
-        </Modal>
-        
-        {/* Scan QR code */}
-        <Modal
-          animationType='slide'
-          visible={openQRCodeScanner}
-        >
-          <QRScannerScreen
-            setOpenQRCodeScanner={setOpenQRCodeScanner}
-          />
-        </Modal>
 
         {/* Selection from */}
         <Modal
@@ -200,12 +186,12 @@ export default function Calendar({navigation}){
               </View>
 
               <View style={{flexDirection: 'row', padding: 10}}>
-                <TouchableOpacity style={[styles.transitionButton, {borderRightWidth: 1}]} onPress={() => setOpenAddMedication(true)}>
+                <TouchableOpacity style={[styles.transitionButton, {borderRightWidth: 1}]} onPress={handleClickOpenMedicationForm}>
                 <MaterialCommunityIcons name='form-select' size={36}/>
                   <Text>Manual</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.transitionButton} onPress={() => setOpenQRCodeScanner(true)}>
+                <TouchableOpacity style={styles.transitionButton} onPress={handleClickOpenQRCodeScanner}>
                   <MaterialCommunityIcons name='qrcode-scan' size={36}/>
                   <Text>QR Code</Text>
                 </TouchableOpacity>
@@ -226,6 +212,34 @@ export default function Calendar({navigation}){
             newTime={newTime}
             setNewTime={setNewTime}
           /> */}
+        </Modal>
+
+        {/* Manual input form */}
+        <Modal
+          presentationStyle="fullScreen"
+          animationType='slide'
+          visible={openAddMedication}
+        >
+            <MedicationForm
+            newDate = {newDate}
+            newMedication={newMedication}
+            setNewDate={setNewDate}
+            setNewMedication={setNewMedication}
+            setOpenAddMedication={setOpenAddMedication}
+            newTime={newTime}
+            setNewTime={setNewTime}
+            />
+        </Modal>
+        
+        {/* Scan QR code */}
+        <Modal
+          presentationStyle="fullScreen"
+          animationType='slide'
+          visible={openQRCodeScanner}
+        >
+          <QRScannerScreen
+            setOpenQRCodeScanner={setOpenQRCodeScanner}
+          />
         </Modal>
         
       </View>

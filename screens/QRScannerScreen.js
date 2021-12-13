@@ -6,10 +6,13 @@ import { NavigationContainer } from '@react-navigation/native';
 import { addDoc, collection, collectionGroup, Timestamp } from '@firebase/firestore';
 import { db } from '../firebase/Config';
 import { useAuth } from '../Context/AuthContext';
+import { confirmPushNotification, schedulePushNotification, Scheduling } from '../components/PushNotification';
 
 export default function QRScannerScreen({navigation, setOpenQRCodeScanner}) {
     const [hasPermission, setHasPermission] = useState(null);
     const [scanned, setScanned] = useState(false);
+
+    Scheduling();
 
     useEffect(() => {
         (async () => {
@@ -19,15 +22,6 @@ export default function QRScannerScreen({navigation, setOpenQRCodeScanner}) {
     }, []);
 
     const { currentUser, medications, setMedications } = useAuth()
-
-    const fetchData = async () => {
-        const medicationNewDoc = {
-            
-        }
-
-        const medicationDocRef = collection(db, 'users', currentUser.uid, 'medications')
-        await addDoc(medicationDocRef, )
-    }
 
     const handleBarCodeScanned = async ({ type, data }) => {
         setScanned(true);
@@ -72,6 +66,10 @@ export default function QRScannerScreen({navigation, setOpenQRCodeScanner}) {
                         updatedAt: new Date()
                     })
                 })
+                const hour = new Date(data.reminders[i].timestamp).getHours();
+                const minute = new Date(data.reminders[i].timestamp).getMinutes();
+
+                schedulePushNotification(hour, minute, data.pillsInStock)
             }
 
             setMedications(prevMedications => [...prevMedications, {
@@ -82,7 +80,8 @@ export default function QRScannerScreen({navigation, setOpenQRCodeScanner}) {
                 reminders: array
             }])
         })
-
+        
+        confirmPushNotification();
     };
 
     const handleClickBack = () => {
