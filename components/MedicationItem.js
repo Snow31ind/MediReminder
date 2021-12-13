@@ -23,12 +23,6 @@ export default function MedicationItem({navigation, reminders, setReminders, rem
     const isMissed = reminder.isMissed
     const note = reminder.note
 
-    // const medication = {
-    //   id: medicationId,
-    //   name: medicationName,
-    //   pillsInStock: reminder.pillsInStock,
-    //   refill: reminder.refill
-    // }
 
     const { currentUser, medications, setMedications } = useAuth()
 
@@ -82,7 +76,6 @@ export default function MedicationItem({navigation, reminders, setReminders, rem
     }
 
     const [rescheduleDate, setRescheduleDate] = useState()
-    // const [rescheduleTime, setRescheduleTime] = useState()
     const [isReschedulingDate, setIsReschedulingDate] = useState(false)
     const [isReschedulingTime, setIsReschedulingTime] = useState(false)
 
@@ -107,7 +100,6 @@ export default function MedicationItem({navigation, reminders, setReminders, rem
     const handleConfirmRescheduleTime = (day) => {
       let newDay = rescheduleDate
       newDay.setHours(day.getHours(), day.getMinutes(), 0)
-      // console.log(newDay.toLocaleString());
 
       rescheduleReminder(currentUser.uid, medicationId, reminderId, newDay)
 
@@ -116,17 +108,8 @@ export default function MedicationItem({navigation, reminders, setReminders, rem
         timestamp: newDay
       }, sort)
 
-      // let clickedReminder = reminders.find(item => item.id == reminder.id)
-      // clickedReminder.timestamp = newDay
-
-      // let newReminders = [...reminders.filter(item => item.id != reminder.id), clickedReminder]
-      // newReminders = newReminders.sort( (a, b) => (a.timestamp - b.timestamp) )
-
-      // setReminders(newReminders)
-
       setIsReschedulingTime(false)
       
-      // setRefresh()
     }
 
     const handleClickDeleteReminder = () => {
@@ -135,7 +118,6 @@ export default function MedicationItem({navigation, reminders, setReminders, rem
 
       removeReminder(medications, setMedications, reminder.medicationId, reminder.id)
 
-      // setRefresh()
     }
 
     const [isEditing, setIsEditing] = useState(false)
@@ -186,7 +168,7 @@ export default function MedicationItem({navigation, reminders, setReminders, rem
 								<View style={styles.modalContainer}>
                   <View style={styles.header}>
                     <Feather onPress={() => setOpenModal(false)} name='x' color='black' size={28}/>
-                    <View style={{flexDirection: 'row', justifyContent: 'space-between', width: 100}}>
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between', width: 100, alignItems: 'center'}}>
                       <MaterialCommunityIcons onPress={handleClickCheckInformation} name='information-outline' size={20}/>
                       <MaterialCommunityIcons onPress={handleClickEditReminder} name='pencil-outline' size={20}/>
                       <MaterialCommunityIcons onPress={handleClickDeleteReminder} name='trash-can-outline' size={20}/>

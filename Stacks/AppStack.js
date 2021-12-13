@@ -23,7 +23,7 @@ const AppStack = () => {
                 <Drawer.Screen name='Record' component={RecordScreen} />
                 <Drawer.Screen name='Medication' component={MedicationScreen} />
                 {/* <Drawer.Screen name='Notification' component={NotificationScreen}/> */}
-                <Drawer.Screen name='Scanner' component={QRScannerScreen} />
+                {/* <Drawer.Screen name='Scanner' component={QRScannerScreen}/> */}
                 <Drawer.Screen name='Setting' component={SettingScreen} />
             </Drawer.Navigator>
         </NavigationContainer>

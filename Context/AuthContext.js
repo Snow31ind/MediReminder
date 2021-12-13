@@ -160,13 +160,18 @@ export function AuthProvider({children}) {
         } catch (e) {
           console.log('Error in auth state changed:', e.message);
         }
+    }, [])
 
+    useEffect(
+      () => {
         return () => {
           setInfo()
           setCurrentUser(),
-          setMedications()
+          setMedications(),
+          setError()
         }
-    }, [])
+      }
+    , [])
 
 
     const value = {

@@ -3,8 +3,8 @@
   "expoServerPort": 19000,
   "packagerPort": 19000,
   "packagerPid": null,
-  "expoServerNgrokUrl": "https://6z-h4g.snowblind151.medireminder.exp.direct",
-  "packagerNgrokUrl": "https://packager.6z-h4g.snowblind151.medireminder.exp.direct",
-  "ngrokPid": 11076,
+  "expoServerNgrokUrl": null,
+  "packagerNgrokUrl": null,
+  "ngrokPid": null,
   "webpackServerPort": null
 }

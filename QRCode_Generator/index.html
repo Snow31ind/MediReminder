@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ko" lang="ko">
+<head>
+	<title>Cross-Browser QRCode generator for Javascript</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+	<script type="text/javascript" src="qrcode.js"></script>
+	<!-- <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script> -->
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<div class="container">
+		<form>
+		  	<div class="row">
+				<div class="col-25">
+					<label for="name">Name</label>
+				</div>
+				<div class="col-75">
+					<input type="text" id="name" name="name" placeholder="Name...">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-25">
+					<label for="name">Pill in stock</label>
+				</div>
+				<div class="col-75">
+					<input type="number" id="pillsInStock" name="pillsInStock" placeholder="Pill in stock...">
+				</div>
+		  	</div>
+			<div class="row">
+				<div class="col-25">
+					<label for="name">Refill</label>
+				</div>
+				<div class="col-75">
+					<label class="switch"><input type="checkbox" id="refill" name="refill"><span class="slider round"></span></label>
+				</div>
+		  	</div>
+			<div class="row">
+				<div class="col-25">
+					<label for="name">Start date</label>
+				</div>
+				<div class="col-75">
+					<input type="datetime-local" id="startDate" name="startDate">
+				</div>
+		  	</div>
+			<div class="row">
+				<div class="col-25">
+					<label for="name">End date</label>
+				</div>
+				<div class="col-25" style="padding-top: 8px;">
+					<label class="switch"><input type="checkbox" id="isEnd" name="isEnd"><span class="slider round"></span></label>
+				</div>
+				<div class="col-50">
+					<input type="datetime-local" id="endDate" name="endDate" disabled>
+				</div>
+		  	</div>
+			<div class="row">
+				<div class="col-25">
+					<label for="name">Reminder</label>
+				</div>
+				<div id="reminders">
+					<div id="reminder">
+						<div class="col-75">
+							<input type="number" id="quantity" name="quantity" placeholder="Quantity...">
+						</div>
+						<div class="col-75">
+							<input type="text" id="note" name="note" placeholder="Note...">
+						</div>
+						<div class="col-75">
+							<input type="datetime-local" id="timeStamp" name="timeStamp">
+						</div>
+						<div class="col-75">
+							<button id="remove" class="hidden" style="float: right" type="button" onclick="removeReminder(this.parentNode.parentNode)">Remove reminder</button>
+						</div>
+						<hr style="float: right; width: 75%">
+					</div>
+				</div>	
+			</div>
+			<div class="row">
+				<button id="add" type="button">Add reminder</button>
+			</div>
+			<div class="row">
+				<button id="make" type="button">Get QR Code</button>	
+			</div>
+		</form>
+	</div>
+
+	<div id="qrcode" style="width:150px; height:200px; margin: 15px auto"></div>
+
+	<script type="text/javascript">
+		var total_reminder = 1;
+		document.getElementById("isEnd").onclick = function () {
+			if(document.getElementById('isEnd').checked)
+				document.getElementById('endDate').disabled=false;
+
+			else
+				document.getElementById('endDate').disabled=true;
+		}
+
+		document.getElementById("add").onclick = function () {
+			if(total_reminder === 1) {
+				document.getElementById("remove").classList.remove("hidden");
+			}
+			var first_reminder = document.querySelector('#reminder');
+			var new_reminder = first_reminder.cloneNode(true);
+			new_reminder.childNodes[1].childNodes[1].value = '';
+			new_reminder.childNodes[3].childNodes[1].value = '';
+			new_reminder.childNodes[5].childNodes[1].value = '';
+			first_reminder.after(new_reminder);
+			++total_reminder;
+		}
+
+		function removeReminder(reminder) {
+			if(total_reminder > 1) {
+				reminder.remove();
+				--total_reminder;
+			}
+			if(total_reminder === 1) {
+				document.getElementById("remove").classList.add("hidden");
+			}
+		}
+
+		var qrcode = new QRCode(document.getElementById("qrcode"), {
+			width : 150,
+			height : 150
+		});
+
+		document.getElementById("make").onclick = function () {
+			var reminders = document.querySelector('#reminders').childNodes;
+			var check_empty = document.getElementById("name").value == '' || document.getElementById("pillsInStock").value == '' || document.getElementById("startDate").value == '' || (document.querySelector('#isEnd').checked && document.getElementById("endDate").value == '');
+			for (let i = 0; i < reminders.length; ++i) {
+				if(reminders[i].id === 'reminder') {
+					check_empty = check_empty || reminders[i].childNodes[1].childNodes[1].value == '' || reminders[i].childNodes[3].childNodes[1].value == '' || reminders[i].childNodes[5].childNodes[1].value == '';
+				}
+			}
+			if(check_empty) {
+				// Swal.fire({
+				// 	title: 'Error!',
+				// 	text: 'Please fill all the blanks!',
+				// 	icon: 'error',
+				// 	confirmButtonText: 'Okay'
+				// });
+				alert("Please fill all the blanks!");
+			}
+			else {
+				var bill = `{"name":"${document.getElementById("name").value}", "pillsInStock":${document.getElementById("pillsInStock").value}, "refill": ${document.querySelector('#refill').checked}, "startDate":"${document.getElementById("startDate").value}", "endDate":${document.querySelector('#isEnd').checked ? document.getElementById("endDate").value : null} , "reminders":[`;
+				for (let i = 0; i < reminders.length; ++i) {
+					if(reminders[i].id === 'reminder') {
+						bill += `{"quantity": ${reminders[i].childNodes[1].childNodes[1].value}, "note": "${reminders[i].childNodes[3].childNodes[1].value}", "timestamp": "${reminders[i].childNodes[5].childNodes[1].value}"}, `;
+					}
+				}
+				bill = bill.substr(0, bill.length - 2) + `]}`;
+				console.log(bill);
+				if(bill.length >= 190 && bill.length <= 213) {
+					bill += ' '.repeat(24);
+				}
+				console.log(bill.length);
+				qrcode.makeCode(bill);
+			}
+		}
+
+	</script>
+</body>

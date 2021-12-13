@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Text, View, StyleSheet, Button, TouchableOpacity } from 'react-native';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import { NavigationContainer } from '@react-navigation/native';
-import HomeScreen from '../screens/HomeScreen';
+// import HomeScreen from '../screens/HomeScreen';
 import { addDoc, collection, collectionGroup, Timestamp } from '@firebase/firestore';
 import { db } from '../firebase/Config';
 import { useAuth } from '../Context/AuthContext';
 
-export default function QRScannerScreen({navigation}) {
+export default function QRScannerScreen({navigation, setOpenQRCodeScanner}) {
     const [hasPermission, setHasPermission] = useState(null);
     const [scanned, setScanned] = useState(false);
 
@@ -85,6 +85,10 @@ export default function QRScannerScreen({navigation}) {
 
     };
 
+    const handleClickBack = () => {
+        setOpenQRCodeScanner(false)
+    }
+
     if (hasPermission === null) {
         return <Text>Requesting for camera permission</Text>;
     }
@@ -99,7 +103,7 @@ export default function QRScannerScreen({navigation}) {
                 style={StyleSheet.absoluteFillObject}
             />
             {scanned && <Button title={'Tap to Scan Again'} onPress={() => setScanned(false)} />}
-            <Button title={'Back to Home'} onPress={() => navigation.navigate('Home')} />
+            <Button title={'Back to Home'} onPress={handleClickBack} />
         </View>
     );
 }
