@@ -15,6 +15,7 @@ import { setStatusBarHidden } from "expo-status-bar";
 import { useUser } from "../Context/UserContext";
 import { useAuth } from "../Context/AuthContext";
 import { db } from "../firebase/Config";
+import { Scheduling, confirmPushNotification, schedulePushNotification } from "./PushNotification";
 
 export default function MedicationForm({setRefresh, setOpenAddMedication ,addMedicationReminder, newMedication, newDate, setNewMedication, setNewDate, newTime, setNewTime}){
   // daily, specific, interval
@@ -384,6 +385,11 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
       createMedicationPlan()
       // setRefresh()
       setOpenAddMedication(false)
+      confirmPushNotification()
+      for (let reminder of reminders)
+      {
+        schedulePushNotification(parseInt(reminder.hour), parseInt(reminder.minute), parseInt(pillsInStock))
+      }
   }
 
   const setUpReminders = (startDate, endDate) => {
@@ -452,7 +458,7 @@ export default function MedicationForm({setRefresh, setOpenAddMedication ,addMed
       note: ''
     }
     ])
-
+  Scheduling()
   return (
     <>
     <SafeAreaView style={{flex: 1}}>
